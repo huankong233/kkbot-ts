@@ -1,13 +1,13 @@
-import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import type { commandFormat } from '@/libs/eventReg.ts'
-import type { CQEvent } from '@huan_kong/go-cqwebsocket'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
+import { getDir } from '@/libs/getDirName.ts'
 import { makeLogger } from '@/libs/logger.ts'
 import { replyMsg } from '@/libs/sendMsg.ts'
-import { getDir } from '@/libs/getDirName.ts'
+import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
+import type { CQEvent } from 'go-cqwebsocket'
 import fs from 'fs'
-import path from 'path'
 import { jsonc } from 'jsonc'
+import path from 'path'
 
 const logger = makeLogger({ pluginName: 'block' })
 

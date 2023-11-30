@@ -1,0 +1,3 @@
+interface dinggongData {
+  records: string[]
+}

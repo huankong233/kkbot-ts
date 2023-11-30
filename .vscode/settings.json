@@ -25,8 +25,7 @@
   "editor.linkedEditing": true,
   // 默认启用prettier
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  // 让函数(名)和后面的括号之间是否加个空格
-  "javascript.format.insertSpaceBeforeFunctionParenthesis": false,
+
   // prettier配置
   // 详见:https://prettier.io/docs/en/options.html
   "prettier.semi": false,
@@ -38,36 +37,20 @@
   "prettier.printWidth": 100,
   "prettier.trailingComma": "none",
 
-  // Manta's Stylus Supremacy配置
-  // 详见:https://thisismanta.github.io/stylus-supremacy/#options
-  "stylusSupremacy.insertColons": false,
-  "stylusSupremacy.insertSemicolons": false,
-  "stylusSupremacy.insertBraces": false,
-  "stylusSupremacy.insertNewLineAroundImports": false,
-  "stylusSupremacy.insertNewLineAroundBlocks": false,
-
   // eslint配置
   // 详见:https://eslint.org/docs/latest/rules/
-  "eslint.validate": ["javascript", "typescript", "json", "markdown"],
+  "eslint.validate": ["javascript", "typescript"],
+
   // 失去焦点自动保存
   "files.autoSave": "onFocusChange",
   // 删除时不提示
   "explorer.confirmDelete": false,
   // 在没有从上一会话中恢复出信息的情况下，在启动时不打开编辑器。
   "workbench.startupEditor": "none",
-  // 修改默认终端为cmd
-  "terminal.integrated.defaultProfile.windows": "Git Bash",
   "editor.fontSize": 15,
   "editor.minimap.enabled": false,
-  "git.autofetch": true,
-  "git.enableSmartCommit": true,
-  "git.confirmSync": false,
   "javascript.updateImportsOnFileMove.enabled": "always",
   "editor.unicodeHighlight.ambiguousCharacters": false,
-  "[xml]": {
-    "editor.defaultFormatter": "DotJoshJohnson.xml"
-  },
-  "workbench.iconTheme": "material-icon-theme",
   "editor.parameterHints.cycle": true,
   "editor.parameterHints.enabled": true,
   "editor.quickSuggestions": {
@@ -77,36 +60,11 @@
   },
   "explorer.confirmDragAndDrop": false,
   "editor.autoClosingBrackets": "beforeWhitespace",
-  "terminal.integrated.tabs.defaultColor": "terminal.ansiBlue",
-  "terminal.integrated.smoothScrolling": true,
-  "terminal.integrated.profiles.windows": {
-    "PowerShell": {
-      "source": "PowerShell",
-      "icon": "terminal-powershell"
-    },
-    "Command Prompt": {
-      "path": ["${env:windir}\\Sysnative\\cmd.exe", "${env:windir}\\System32\\cmd.exe"],
-      "args": [],
-      "icon": "terminal-cmd"
-    }
-  },
-  "terminal.integrated.copyOnSelection": true,
-  "terminal.integrated.fontFamily": "'MesloLGS Nerd Font Mono',Consolas, 'Courier New', monospace",
-  "workbench.colorTheme": "One Dark Pro Darker",
-  "terminal.integrated.autoReplies": {},
-  "terminal.integrated.cursorStyle": "line",
-  "terminal.integrated.cursorBlinking": true,
-  "Codegeex.Privacy": true,
-  "Codegeex.Explanation.LanguagePreference": "中文",
-  "Codegeex.DisabledFor": {
-    "markdown": true
-  },
-  "Codegeex.OnlyKeyControl": false,
-  "workbench.colorCustomizations": {},
   "path-intellisense.extensionOnImport": true,
   "javascript.preferences.importModuleSpecifierEnding": "js",
-  "typescript.preferences.importModuleSpecifierEnding": "js",
+  "typescript.preferences.importModuleSpecifierEnding": "ts",
   "diffEditor.ignoreTrimWhitespace": false,
-  "Codegeex.EnableExtension": true,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "liveServer.settings.donotVerifyTags": true,
+  "files.eol": "\n",
+  "tabnine.experimentalAutoImports": true
 }

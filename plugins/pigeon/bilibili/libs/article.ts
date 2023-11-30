@@ -1,8 +1,8 @@
-import { USER_AGENT } from './const.ts'
-import { CQ } from '@huan_kong/go-cqwebsocket'
+import { retryGet } from '@/libs/axios.ts'
 import { humanNum } from '@/libs/humanNum.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { retryGet } from '@/libs/axios.ts'
+import { CQ } from 'go-cqwebsocket'
+import { USER_AGENT } from './const.ts'
 
 const logger = makeLogger({ pluginName: 'bilibili', subModule: 'article' })
 

@@ -1,8 +1,9 @@
-import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import type { messageCallback, noticeCallback, requestCallback } from '@/global.d.ts'
-import { CQ, CQEvent } from '@huan_kong/go-cqwebsocket'
 import { sortObjectArray } from '@/libs/array.ts'
 import { replyMsg } from '@/libs/sendMsg.ts'
+import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
+import type { CQEvent } from 'go-cqwebsocket'
+import { CQ } from 'go-cqwebsocket'
 
 /**
  * 事件快捷注册
@@ -100,7 +101,7 @@ export function format(message: string): commandFormat | false {
   const { botConfig } = global.config as { botConfig: botConfig }
 
   // 判断是否是一个命令
-  if (message[0] !== botConfig.prefix) return false
+  if (botConfig.prefix !== '' && message[0] !== botConfig.prefix) return false
 
   // 参数分割
   let command = message
@@ -109,7 +110,7 @@ export function format(message: string): commandFormat | false {
     .map(value => value.trim())
 
   return {
-    name: command[0].replace(botConfig.prefix, ''),
+    name: botConfig.prefix !== '' ? command[0].replace(botConfig.prefix, '') : command[0],
     params: command.slice(1, command.length)
   }
 }

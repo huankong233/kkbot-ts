@@ -1,3 +1,4 @@
+import { makeSystemLogger } from '@/libs/logger.ts'
 import { sleep } from '@/libs/sleep.ts'
 
 // 定义一个函数类型，它接受任何参数并返回任何值
@@ -18,6 +19,11 @@ export async function retryAsync<T extends anyAsyncFunction>(
     try {
       return await func()
     } catch (e) {
+      if (debug) {
+        const logger = makeSystemLogger({ pluginName: 'retry' })
+        logger.WARNING('执行失败')
+        logger.DEBUG(e)
+      }
       if (times === 0) throw e
       if (ms !== 0) await sleep(ms)
     }

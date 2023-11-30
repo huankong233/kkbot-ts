@@ -1,6 +1,6 @@
+import { getTime } from '@/libs/time.ts'
 import clc from 'cli-color'
 import { jsonc } from 'jsonc'
-import { getTime } from '@/libs/time.ts'
 
 interface loggerParams {
   pluginName: string

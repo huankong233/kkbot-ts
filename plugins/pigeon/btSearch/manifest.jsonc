@@ -1,0 +1,1 @@
+{"name":"btSearch","description":"调用bt搜索接口","version":"0.2.0","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{"cheerio":"^1.0.0-rc.12"},"dependPlugins":{"pigeon":"0.2.0"}}

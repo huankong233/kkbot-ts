@@ -1,10 +1,10 @@
-import fs from 'fs'
-import path from 'path'
-import clc from 'cli-color'
-import { jsonc } from 'jsonc'
-import { getDate } from '@/libs/time.ts'
 import { deleteOldestFiles } from '@/libs/fs.ts'
 import { makeLogger } from '@/libs/logger.ts'
+import { getDate } from '@/libs/time.ts'
+import clc from 'cli-color'
+import fs from 'fs'
+import { jsonc } from 'jsonc'
+import path from 'path'
 
 const levelNumericalCode = {
   SUCCESS: 1,
@@ -23,13 +23,11 @@ export default function rewriteConsoleLog() {
   const { logConfig } = global.config as { logConfig: logConfig }
 
   if (!logConfig.enable) {
-    logger.WARNING(`未开启日志功能,推荐开启`)
-    return
+    return logger.WARNING(`未开启日志功能,推荐开启`)
   }
 
   if (!logConfig.force && global.dev) {
-    logger.DEBUG(`处于DEV模式中,禁用日志保存功能`)
-    return
+    return logger.DEBUG(`处于DEV模式中,禁用日志保存功能`)
   } else if (logConfig.force) {
     logger.DEBUG(`处于DEV模式中,强制开启日志保存功能`)
   }

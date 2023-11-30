@@ -1,0 +1,15 @@
+{
+  // '摸鱼人日历' | '每天60秒'
+  "type": "摸鱼人日历",
+  // 参考: https://crontab.guru/
+  "crontab": "30 8 * * *",
+  // 需要发送的群组
+  // 可用结构:
+  // 1. 直接用qq群号
+  // Tip: type 和 crontab 都是可选性
+  // 2. {group_id: 群号,type:"摸鱼人日历",crontab: "30 8 * * *"}
+  // 3. [{group_id: 群号,type:"摸鱼人日历",crontab: "30 8 * * *"}]
+  "groups": [],
+  // 冷却时间(秒)
+  "cd": 10
+}

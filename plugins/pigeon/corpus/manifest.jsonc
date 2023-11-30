@@ -1,0 +1,1 @@
+{"name":"corpus","description":"语言库","version":"0.2.0","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{},"dependPlugins":{"pigeon":"0.2.0"}}

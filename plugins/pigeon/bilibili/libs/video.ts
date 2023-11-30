@@ -1,16 +1,16 @@
-import { stringify } from 'qs'
-import { CQ } from '@huan_kong/go-cqwebsocket'
-import { humanNum } from '@/libs/humanNum.ts'
 import { retryGet } from '@/libs/axios.ts'
+import { humanNum } from '@/libs/humanNum.ts'
 import { makeLogger } from '@/libs/logger.ts'
+import { CQ } from 'go-cqwebsocket'
 
 const logger = makeLogger({ pluginName: 'bilibili', subModule: 'video' })
 
-export const getVideoInfo = async (param: { avid?: string; bvid?: string }): Promise<string> => {
+export const getVideoInfo = async (params: { avid?: string; bvid?: string }): Promise<string> => {
   try {
     const {
       data: { code, message, data }
-    } = await retryGet(`https://api.bilibili.com/x/web-interface/view?${stringify(param)}`, {
+    } = await retryGet(`https://api.bilibili.com/x/web-interface/view`, {
+      params,
       timeout: 10000
     })
 
@@ -35,7 +35,7 @@ export const getVideoInfo = async (param: { avid?: string; bvid?: string }): Pro
       `https://www.bilibili.com/video/${bvid}`
     ].join('\n')
   } catch (error) {
-    logger.WARNING(`[error] bilibili get video info ${param}`)
+    logger.WARNING(`[error] bilibili get video info ${JSON.stringify(params)}`)
     logger.ERROR(error)
     return '获取信息失败~'
   }

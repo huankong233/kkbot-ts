@@ -1,12 +1,18 @@
-import { CQEvent } from '@huan_kong/go-cqwebsocket'
-import { eventReg } from '@/libs/eventReg.ts'
-import { mute } from '../mute/index.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
-import { randomInt } from '@/libs/random.ts'
 import type { fakeContext } from '@/global.ts'
+import { eventReg } from '@/libs/eventReg.ts'
+import { randomFloat, randomInt } from '@/libs/random.ts'
+import { replyMsg } from '@/libs/sendMsg.ts'
+import { mute } from '@/plugins/pigeon/mute/index.ts'
+import type { CQEvent } from 'go-cqwebsocket'
 
 export default () => {
+  init()
   event()
+}
+
+function init() {
+  const { pokeData } = global.data as { pokeData: pokeData }
+  pokeData.count = {}
 }
 
 function event() {
@@ -32,10 +38,9 @@ async function poke(context: CQEvent<'notice.notify.poke.group'>['context']) {
   const fakeContext: fakeContext = { user_id, group_id, self_id, message_type: 'group' }
 
   //增加计数
-  if (!pokeData.count) pokeData.count = {}
   if (!pokeData.count[user_id]) pokeData.count[user_id] = 0
 
-  if (randomInt(0, 100) <= pokeConfig.banProb) {
+  if (randomFloat(0, 100) <= pokeConfig.banProb) {
     pokeData.count[user_id]++
   }
 

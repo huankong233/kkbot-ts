@@ -1,9 +1,9 @@
-import type { CQEvent } from '@huan_kong/go-cqwebsocket'
-import { isToday } from '@/libs/time.ts'
 import { eventReg } from '@/libs/eventReg.ts'
-import { getUserData, add } from '../pigeon/index.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import { randomInt } from '@/libs/random.ts'
+import { replyMsg } from '@/libs/sendMsg.ts'
+import { isToday } from '@/libs/time.ts'
+import { add, getUserData } from '@/plugins/pigeon/pigeon/index.ts'
+import type { CQEvent } from 'go-cqwebsocket'
 
 export default () => {
   event()

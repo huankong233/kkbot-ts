@@ -1,10 +1,16 @@
 import { eventReg } from '@/libs/eventReg.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import { randomFloat } from '@/libs/random.ts'
-import { CQEvent } from '@huan_kong/go-cqwebsocket'
+import { replyMsg } from '@/libs/sendMsg.ts'
+import type { CQEvent } from 'go-cqwebsocket'
 
 export default async () => {
+  init()
   event()
+}
+
+function init() {
+  const { repeatData } = global.data as { repeatData: repeatData }
+  repeatData.repeat = {}
 }
 
 function event() {

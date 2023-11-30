@@ -1,6 +1,6 @@
 import fs from 'fs'
-import path from 'path'
 import { jsonc } from 'jsonc'
+import path from 'path'
 
 /**
  * 加载框架信息

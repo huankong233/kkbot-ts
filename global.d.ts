@@ -1,6 +1,6 @@
 import type { commandFormat } from '@/libs/eventReg.ts'
 import type { manifest } from '@/libs/loadPlugin.ts'
-import type { CQEvent, CQWebSocket } from '@huan_kong/go-cqwebsocket'
+import type { CQEvent, CQWebSocket } from 'go-cqwebsocket'
 import type { Knex } from 'knex'
 
 export type fakeContext = PrivateMessage | GroupMessage

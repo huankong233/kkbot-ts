@@ -10,7 +10,6 @@ export default async function () {
   await loadPluginDir('./plugins/builtInPlugins')
   await loadPluginDir('./plugins/tools')
   await loadPlugin('pigeon', './plugins/pigeon')
-  // 'searchImage',
   await loadPluginDir('./plugins/pigeon')
   await loadPlugin('help', './plugins/tools')
 }

@@ -1,15 +1,15 @@
 // 代码来自 : https://github.com/Tsuk1ko/cq-picsearcher-bot
-import type { CQEvent } from '@huan_kong/go-cqwebsocket'
-import { CQ } from '@huan_kong/go-cqwebsocket'
-import { eventReg } from '@/libs/eventReg.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
-import { parseJSON } from '@/libs/praseJSON.ts'
-import { makeLogger } from '@/libs/logger.ts'
 import { retryHead } from '@/libs/axios.ts'
-import { getVideoInfo } from './libs/video.ts'
-import { getDynamicInfo } from './libs/dynamic.ts'
+import { eventReg } from '@/libs/eventReg.ts'
+import { makeLogger } from '@/libs/logger.ts'
+import { parseJSON } from '@/libs/praseJSON.ts'
+import { replyMsg } from '@/libs/sendMsg.ts'
+import type { CQEvent } from 'go-cqwebsocket'
+import { CQ } from 'go-cqwebsocket'
 import { getArticleInfo } from './libs/article.ts'
+import { getDynamicInfo } from './libs/dynamic.ts'
 import { getLiveRoomInfo } from './libs/live.ts'
+import { getVideoInfo } from './libs/video.ts'
 
 export const logger = makeLogger({ pluginName: 'bilibili' })
 

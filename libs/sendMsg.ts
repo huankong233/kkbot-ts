@@ -1,7 +1,7 @@
 import type { fakeContext } from '@/global.d.ts'
-import type { Tags, CQEvent } from '@huan_kong/go-cqwebsocket'
 import { makeSystemLogger } from '@/libs/logger.ts'
-import { CQ } from '@huan_kong/go-cqwebsocket'
+import type { CQEvent, Tags } from 'go-cqwebsocket'
+import { CQ } from 'go-cqwebsocket'
 import * as emoji from 'node-emoji'
 
 const logger = makeSystemLogger({ pluginName: 'sendMsg' })

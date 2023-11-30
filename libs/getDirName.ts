@@ -1,5 +1,5 @@
-import url from 'url'
 import path from 'path'
+import url from 'url'
 
 /**
  * 获取当前文件的路径

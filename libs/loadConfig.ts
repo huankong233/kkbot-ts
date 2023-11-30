@@ -1,7 +1,7 @@
-import fs from 'fs'
-import path from 'path'
-import { jsonc } from 'jsonc'
 import { makeSystemLogger } from '@/libs/logger.ts'
+import fs from 'fs'
+import { jsonc } from 'jsonc'
+import path from 'path'
 
 const logger = makeSystemLogger({
   pluginName: 'loadConfig'

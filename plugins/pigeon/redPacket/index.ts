@@ -1,10 +1,10 @@
-import type { CQEvent } from '@huan_kong/go-cqwebsocket'
+import { getUserName } from '@/libs/Api.ts'
 import type { commandFormat } from '@/libs/eventReg.ts'
-import { add, reduce } from '../pigeon/index.ts'
-import { eventReg } from '@/libs/eventReg.ts'
-import { missingParams } from '@/libs/eventReg.ts'
+import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { getRangeCode, randomInt } from '@/libs/random.ts'
 import { replyMsg } from '@/libs/sendMsg.ts'
+import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
+import type { CQEvent } from 'go-cqwebsocket'
 import { jsonc } from 'jsonc'
 
 export default async () => {
@@ -141,7 +141,7 @@ async function getAll(context: CQEvent<'message'>['context']) {
     msg.push(
       [
         '由',
-        await bot.get_stranger_info(item.send_user_id).then(res => res.nickname),
+        await getUserName(item.send_user_id),
         '发送的口令: ',
         item.code,
         ' ,剩余',

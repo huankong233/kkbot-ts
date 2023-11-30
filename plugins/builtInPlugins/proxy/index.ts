@@ -9,6 +9,6 @@ export default function () {
     const NodeGlobalProxy = proxy.default
     NodeGlobalProxy.setConfig(proxyConfig.proxy)
     NodeGlobalProxy.start()
-    logger.INFO('代理已启动')
+    logger.NOTICE('代理已启动')
   }
 }

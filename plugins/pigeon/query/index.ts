@@ -1,7 +1,9 @@
-import { CQEvent } from '@huan_kong/go-cqwebsocket'
-import { getUserData } from '@/plugins/pigeon/pigeon/index.ts'
+import { getUserName } from '@/libs/Api.ts'
+import type { commandFormat } from '@/libs/eventReg.ts'
+import { eventReg } from '@/libs/eventReg.ts'
 import { replyMsg } from '@/libs/sendMsg.ts'
-import { commandFormat, eventReg } from '@/libs/eventReg.ts'
+import { getUserData } from '@/plugins/pigeon/pigeon/index.ts'
+import type { CQEvent } from 'go-cqwebsocket'
 
 export default () => {
   event()
@@ -32,7 +34,7 @@ async function query(context: CQEvent<'message'>['context'], command?: commandFo
   }
 
   const userData = await getUserData(user_id)
-  const username = await bot.get_stranger_info(user_id).then(res => res.nickname)
+  const username = await getUserName(user_id)
 
   if (!userData) return await replyMsg(context, `${username}是谁呀,咱不认识呢~`, { reply: true })
 
@@ -55,7 +57,7 @@ async function rankingList(context: CQEvent<'message'>['context']) {
     await Promise.all(
       data.map(async (value, i) => {
         const index = (i + 1).toString().padStart(2, '0')
-        const username = await bot.get_stranger_info(value.user_id).then(res => res.nickname)
+        const username = await getUserName(value.user_id)
         board.push(`第${index}名 名字:"${username}" 拥有${value.pigeon_num}只鸽子`)
       })
     )

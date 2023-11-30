@@ -1,26 +1,26 @@
-import fs from 'fs'
-import path from 'path'
-import * as mime from 'mime-types'
 import { retryGet } from '@/libs/axios.ts'
 import { getRangeCode } from '@/libs/random.ts'
+import fs from 'fs'
+import * as mime from 'mime-types'
+import path from 'path'
 
 /**
  * 删除文件夹
  * @param folder
  */
 export const deleteFolder = (folder: string) => {
-  let files = fs.readdirSync(folder)
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i]
-    const dirPath = path.join(folder, file)
-
-    if (fs.existsSync(dirPath)) {
-      deleteFolder(dirPath)
-    } else {
-      fs.unlinkSync(dirPath)
-    }
+  if (fs.existsSync(folder)) {
+    let files = fs.readdirSync(folder)
+    files.forEach(file => {
+      let dirPath = path.join(folder, file)
+      if (fs.statSync(dirPath).isDirectory()) {
+        deleteFolder(dirPath)
+      } else {
+        fs.unlinkSync(dirPath)
+      }
+    })
+    fs.rmdirSync(folder)
   }
-  fs.rmdirSync(folder)
 }
 
 /**
@@ -86,4 +86,14 @@ export async function deleteOldestFiles(dirPath: string, count: number) {
       return fs.unlinkSync(filePath)
     })
   )
+}
+
+/**
+ * 获取指定文件的base64
+ * @param url 地址
+ */
+export async function getFileBase64(url: string) {
+  return await retryGet(url, { responseType: 'arraybuffer' })
+    .then(res => res.data)
+    .then(buffer => Buffer.from(buffer).toString('base64'))
 }

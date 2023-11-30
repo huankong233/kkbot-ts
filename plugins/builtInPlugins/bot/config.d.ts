@@ -1,4 +1,4 @@
-import type { LoginInfo } from '@huan_kong/go-cqwebsocket'
+import type { Interfaces } from 'go-cqwebsocket'
 
 export interface botConfig {
   configName: string
@@ -26,5 +26,5 @@ export interface botConfig {
 export interface botData {
   wsType: '/api' | '/event'
   ffmpeg: boolean
-  info: LoginInfo
+  info: Interfaces.LoginInfo
 }

@@ -1,1 +1,1 @@
-{"name":"knex","description":"快捷操作数据库","version":"0.2.0","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{"knex":"^3.0.1","mysql2":"^3.6.3"},"dependPlugins":{}}
+{"name":"knex","description":"快捷操作数据库","version":"0.2.0","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{"knex":"^3.0.1","mysql2":"^3.6.5"},"dependPlugins":{}}

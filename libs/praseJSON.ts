@@ -1,4 +1,4 @@
-import { CQ } from '@huan_kong/go-cqwebsocket'
+import { CQ } from 'go-cqwebsocket'
 
 /**
  * 解析CQ:JSON

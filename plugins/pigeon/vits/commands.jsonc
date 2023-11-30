@@ -1,0 +1,6 @@
+[
+  {
+    "commandName": "vits",
+    "commandDescription": ["vits [模型id] [要说的话]"]
+  }
+]

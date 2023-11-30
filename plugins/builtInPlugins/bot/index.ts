@@ -2,7 +2,7 @@ import { format } from '@/libs/eventReg.ts'
 import { globalReg } from '@/libs/globalReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
 import { sendMsg } from '@/libs/sendMsg.ts'
-import { CQ, CQWebSocket } from '@huan_kong/go-cqwebsocket'
+import { CQ, CQWebSocket } from 'go-cqwebsocket'
 import * as emoji from 'node-emoji'
 import type { botConfig, botData } from './config.d.ts'
 
@@ -52,7 +52,7 @@ export default async function () {
           }
         }
 
-        if (attempts++ >= botConfig.goCqhttpConnect.reconnectionAttempts + 1) {
+        if (attempts >= botConfig.goCqhttpConnect.reconnectionAttempts) {
           if (context.code === 1006 && context.reason === '') {
             reject('可能是go-cqhttp地址错误')
           } else {
@@ -61,21 +61,25 @@ export default async function () {
         } else {
           setTimeout(() => bot.reconnect(), botConfig.goCqhttpConnect.reconnectionDelay)
         }
+
+        attempts++
       })
 
-      bot.on('socket.open', function () {
+      bot.on('socket.open', async function () {
         logger.NOTICE(`连接成功[/api]#${attempts}`)
         if (botData.wsType === '/event') {
+          await connectSuccess()
           resolve(true)
         } else {
           botData.wsType = '/api'
         }
-        attempts = 0
+        attempts = 1
       })
 
-      bot.on('socket.openEvent', function () {
+      bot.on('socket.openEvent', async function () {
         logger.NOTICE(`连接成功[/event]#${attempts}`)
         if (botData.wsType === '/api') {
+          await connectSuccess()
           resolve(true)
         } else {
           botData.wsType = '/event'
@@ -160,9 +164,9 @@ function initEvents() {
 }
 
 /**
- * 机器人启动成功
+ * 机器人连接成功
  */
-export async function bootstrapComplete() {
+export async function connectSuccess() {
   const { botConfig } = global.config as { botConfig: botConfig }
   const { botData } = global.data as { botData: botData }
 

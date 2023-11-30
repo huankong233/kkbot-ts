@@ -1,11 +1,11 @@
-import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from '@huan_kong/go-cqwebsocket'
 import type { commandFormat } from '@/libs/eventReg.ts'
-import fs from 'fs'
-import path from 'path'
-import { jsonc } from 'jsonc'
 import { eventReg } from '@/libs/eventReg.ts'
 import { replyMsg } from '@/libs/sendMsg.ts'
+import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
+import type { CQEvent } from 'go-cqwebsocket'
+import fs from 'fs'
+import { jsonc } from 'jsonc'
+import path from 'path'
 
 export default async () => {
   await initial()

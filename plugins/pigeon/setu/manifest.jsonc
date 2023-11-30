@@ -1,0 +1,1 @@
+{"name":"setu","description":"色图","version":"0.2.0","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{"jimp":"^0.22.10"},"dependPlugins":{"pigeon":"0.2.0","proxy":"0.2.0"}}
