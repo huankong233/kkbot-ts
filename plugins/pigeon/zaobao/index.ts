@@ -1,6 +1,6 @@
 import type { fakeContext } from '@/global.d.ts'
 import { retryGet } from '@/libs/axios.ts'
-import { eventReg } from '@/libs/eventReg.ts'
+import { commandFormat, eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
 import { retryAsync } from '@/libs/retry.ts'
 import { replyMsg } from '@/libs/sendMsg.ts'
@@ -21,7 +21,7 @@ export default async () => {
 function event() {
   eventReg('message', async ({ context }, command) => {
     if (!command) return
-    if (command.name === '早报') await zaobao(context)
+    if (command.name === '早报') await zaobao(context, command)
   })
 }
 
@@ -103,8 +103,12 @@ async function init() {
   }
 }
 
-async function zaobao(context: CQEvent<'message'>['context']) {
-  await replyMsg(context, await prepareMessage(false))
+async function zaobao(context: CQEvent<'message'>['context'], command: commandFormat) {
+  let type: zaobaoConfig['type'] = '每天60秒'
+  if (command.params && command.params.length > 0 && urls.get(command.params[0]))
+    type = command.params[0] as zaobaoConfig['type']
+
+  await replyMsg(context, await prepareMessage(false, type))
 }
 
 const urls = new Map([

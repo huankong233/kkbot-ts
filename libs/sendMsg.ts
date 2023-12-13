@@ -30,16 +30,25 @@ export async function replyMsg(
 
   let response
 
-  switch (message_type) {
-    case 'private':
-      //回复私聊
-      response = await bot.send_private_msg(user_id, message)
-      break
-    case 'group':
-      //回复群
-      const { group_id } = context
-      response = await bot.send_group_msg(group_id, message)
-      break
+  try {
+    switch (message_type) {
+      case 'private':
+        //回复私聊
+        response = await bot.send_private_msg(user_id, message)
+        break
+      case 'group':
+        //回复群
+        const { group_id } = context
+        response = await bot.send_group_msg(group_id, message)
+        break
+    }
+  } catch (error) {
+    if (debug) {
+      logger.DEBUG(`发送回复消息:${message}`)
+      const stack = new Error().stack!.split('\n')
+      logger.DEBUG(`stack信息:\n`, stack.slice(1).join('\n'))
+    }
+    throw error
   }
 
   if (debug) {
@@ -61,7 +70,18 @@ export async function replyMsg(
 export async function sendMsg(user_id: number, message: string, toEmoji = true) {
   if (toEmoji) message = parseToEmoji(message)
 
-  const response = await bot.send_private_msg(user_id, message)
+  let response
+
+  try {
+    response = await bot.send_private_msg(user_id, message)
+  } catch (error) {
+    if (debug) {
+      logger.DEBUG(`发送私聊消息:${message}`)
+      const stack = new Error().stack!.split('\n')
+      logger.DEBUG(`stack信息:\n`, stack.slice(1).join('\n'))
+    }
+    throw error
+  }
 
   if (debug) {
     logger.DEBUG(`发送私聊消息:${message}`)
@@ -87,13 +107,22 @@ export async function sendForwardMsg(
 
   let response
 
-  switch (message_type) {
-    case 'group':
-      response = await bot.send_group_forward_msg(context.group_id, messages)
-      break
-    case 'private':
-      response = await bot.send_private_forward_msg(context.user_id, messages)
-      break
+  try {
+    switch (message_type) {
+      case 'group':
+        response = await bot.send_group_forward_msg(context.group_id, messages)
+        break
+      case 'private':
+        response = await bot.send_private_forward_msg(context.user_id, messages)
+        break
+    }
+  } catch (error) {
+    if (debug) {
+      logger.DEBUG(`发送合并消息:\n`, messages)
+      const stack = new Error().stack!.split('\n')
+      logger.DEBUG(`stack信息:\n`, stack.slice(1, stack.length).join('\n'))
+    }
+    throw error
   }
 
   if (debug) {

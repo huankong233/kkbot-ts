@@ -69,7 +69,7 @@ async function bilibiliHandler(context: CQEvent<'message'>['context']) {
   const { avid, bvid, dyid, arid, lrid } = param
 
   if (getInfo.getVideoInfo && (avid || bvid)) {
-    return await reply(context, await getVideoInfo({ avid, bvid }), isMiniProgram)
+    return await reply(context, await getVideoInfo({ aid: avid, bvid }), isMiniProgram)
   }
 
   if (getInfo.getDynamicInfo && dyid) {

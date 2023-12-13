@@ -5,7 +5,7 @@ import { CQ } from 'go-cqwebsocket'
 
 const logger = makeLogger({ pluginName: 'bilibili', subModule: 'video' })
 
-export const getVideoInfo = async (params: { avid?: string; bvid?: string }): Promise<string> => {
+export const getVideoInfo = async (params: { aid?: string; bvid?: string }): Promise<string> => {
   try {
     const {
       data: { code, message, data }

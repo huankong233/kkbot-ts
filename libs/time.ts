@@ -1,3 +1,5 @@
+import { anyAsyncFunction } from '@/libs/retry.ts'
+
 /**
  * 格式化时间,将秒转换为HH:MM:SS的格式
  * @param ms 毫秒
@@ -56,7 +58,9 @@ export const getDate = () => new Date().toISOString().slice(0, 10)
  * @param func
  * @returns
  */
-export const countRunTime = async (func: any): Promise<{ response: any; time: number }> => {
+export async function countRunTime<T extends anyAsyncFunction>(
+  func: T
+): Promise<{ response: Awaited<ReturnType<T>>; time: number }> {
   const start = performance.now()
   const response = await func()
   const end = performance.now()

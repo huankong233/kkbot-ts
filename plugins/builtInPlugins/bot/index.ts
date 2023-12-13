@@ -122,8 +122,12 @@ function initEvents() {
         const response = await events[i].callback(event, format(context.message))
         if (response === 'quit') break
       } catch (error) {
-        eventLogger.WARNING(`插件${events[i].pluginName}运行错误`)
+        eventLogger.WARNING(`插件${events[i].pluginName}运行出错`)
         eventLogger.ERROR(error)
+        if (debug) {
+          const stack = new Error().stack!.split('\n')
+          logger.DEBUG(`stack信息:\n`, stack.slice(1, stack.length).join('\n'))
+        }
       }
     }
   })
@@ -139,8 +143,12 @@ function initEvents() {
         const response = await events[i].callback(event)
         if (response === 'quit') break
       } catch (error) {
-        eventLogger.WARNING(`插件${events[i].pluginName}运行错误`)
+        eventLogger.WARNING(`插件${events[i].pluginName}运行出错`)
         eventLogger.ERROR(error)
+        if (debug) {
+          const stack = new Error().stack!.split('\n')
+          logger.DEBUG(`stack信息:\n`, stack.slice(1, stack.length).join('\n'))
+        }
       }
     }
   })
@@ -156,8 +164,12 @@ function initEvents() {
         const response = await events[i].callback(event)
         if (response === 'quit') break
       } catch (error) {
-        eventLogger.WARNING(`插件${events[i].pluginName}运行错误`)
+        eventLogger.WARNING(`插件${events[i].pluginName}运行出错`)
         eventLogger.ERROR(error)
+        if (debug) {
+          const stack = new Error().stack!.split('\n')
+          logger.DEBUG(`stack信息:\n`, stack.slice(1, stack.length).join('\n'))
+        }
       }
     }
   })

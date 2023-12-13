@@ -2,7 +2,7 @@ import { makeSystemLogger } from '@/libs/logger.ts'
 import { sleep } from '@/libs/sleep.ts'
 
 // 定义一个函数类型，它接受任何参数并返回任何值
-type anyAsyncFunction = (...args: any[]) => Promise<any>
+export type anyAsyncFunction = (...args: any[]) => Promise<any>
 
 /**
  * 自动重试
