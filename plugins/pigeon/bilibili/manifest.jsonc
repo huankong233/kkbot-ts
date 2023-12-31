@@ -1,1 +1,1 @@
-{"name":"bilibili","description":"对bilibili信息进行处理","version":"0.2.0","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{},"dependPlugins":{}}
+{"name":"bilibili","description":"对bilibili信息进行处理","version":"0.2.1","plguinVersion":"3.0","author":[{"name":"huan_kong","link":"https://github.com/huankong233"}],"disableLoadInDir":false,"disableAutoLoadConfig":false,"dependPackages":{},"dependPlugins":{}}

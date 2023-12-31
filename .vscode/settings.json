@@ -19,7 +19,7 @@
   "editor.formatOnSave": true,
   // 每次保存的时候将代码按eslint格式进行修复
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true // 在保存时使用 eslint 格式化
+    "source.fixAll.eslint": "explicit"
   },
   // 启用链接编辑
   "editor.linkedEditing": true,

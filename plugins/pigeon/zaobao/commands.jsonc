@@ -1,6 +1,6 @@
 [
   {
-    "commandName": "早报 (早报类型)",
-    "commandDescription": ["早报", "早报类型:摸鱼人日历或每天60秒"]
+    "commandName": "早报",
+    "commandDescription": ["早报 (早报类型)", "早报类型:摸鱼人日历或每天60秒"]
   }
 ]

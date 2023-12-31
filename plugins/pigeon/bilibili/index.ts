@@ -58,15 +58,15 @@ async function bilibiliHandler(context: CQEvent<'message'>['context']) {
       }
     })() || {}
 
-  if (bilibiliConfig.despise && isMiniProgram) {
+  const param = await getIdFromMsg(url || message)
+  const { avid, bvid, dyid, arid, lrid } = param
+
+  if (bilibiliConfig.despise && isMiniProgram && (avid || bvid || dyid || arid || lrid)) {
     await replyMsg(
       context,
       CQ.image('https://i.loli.net/2020/04/27/HegAkGhcr6lbPXv.png').toString()
     )
   }
-
-  const param = await getIdFromMsg(url || message)
-  const { avid, bvid, dyid, arid, lrid } = param
 
   if (getInfo.getVideoInfo && (avid || bvid)) {
     return await reply(context, await getVideoInfo({ aid: avid, bvid }), isMiniProgram)
