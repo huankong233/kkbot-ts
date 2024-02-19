@@ -9,18 +9,15 @@ export interface botConfig {
     enable: boolean
     msg: string
   }
-  driver: 'go-cqhttp' | 'red'
+  driver: 'go-cqhttp'
   goCqhttpConnect: {
     host: string
     port: number
-    enableAPI: boolean
-    enableEvent: boolean
     accessToken: string
     reconnection: boolean
     reconnectionAttempts: number
     reconnectionDelay: number
   }
-  redConnect: {}
 }
 
 export interface botData {

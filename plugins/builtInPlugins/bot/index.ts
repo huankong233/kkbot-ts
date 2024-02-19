@@ -19,8 +19,6 @@ export default async function () {
 
     if (botConfig.driver === 'go-cqhttp') {
       const bot = new CQWebSocket(botConfig.goCqhttpConnect)
-      bot.messageSuccess = () => {}
-      bot.messageFail = () => {}
 
       let attempts = 1
 
@@ -73,7 +71,6 @@ export default async function () {
         } else {
           botData.wsType = '/api'
         }
-        attempts = 1
       })
 
       bot.on('socket.openEvent', async function () {
@@ -84,13 +81,12 @@ export default async function () {
         } else {
           botData.wsType = '/event'
         }
-        attempts = 0
       })
 
       initEvents()
 
       bot.connect()
-    } else if (botConfig.driver === 'red') {
+    } else if (botConfig.driver === 'openShamrock') {
       // TODO: 未支持
     } else {
       throw new Error('未知驱动器')
@@ -182,7 +178,12 @@ export async function connectSuccess() {
   const { botConfig } = global.config as { botConfig: botConfig }
   const { botData } = global.data as { botData: botData }
 
-  botData.ffmpeg = (await bot.can_send_record()).yes
+  botData.ffmpeg = (
+    await bot.can_send_record().catch(_error => {
+      return { yes: false }
+    })
+  ).yes
+
   botData.info = await bot.get_login_info()
 
   if (dev || !botConfig.online.enable) return

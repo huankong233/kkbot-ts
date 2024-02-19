@@ -13,21 +13,17 @@
     "enable": true,
     "msg": "启动成功"
   },
-  // 选择驱动器 go-cqhttp / red
+  // 选择驱动器 go-cqhttp
   "driver": "go-cqhttp",
   "goCqhttpConnect": {
     // 正向websocket(go-cqhttp)
     "host": "localhost",
     "port": 8080,
-    "enableAPI": true,
-    "enableEvent": true,
     "accessToken": "",
     //自动重连
     "reconnection": true,
     //自动重连延迟和次数
     "reconnectionAttempts": 10,
     "reconnectionDelay": 5000
-  },
-  // 暂不支持
-  "redConnect": {}
+  }
 }
