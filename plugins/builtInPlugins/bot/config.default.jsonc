@@ -15,7 +15,7 @@
   },
   // 选择驱动器 go-cqhttp
   "driver": "go-cqhttp",
-  "goCqhttpConnect": {
+  "connect": {
     // 正向websocket(go-cqhttp)
     "host": "localhost",
     "port": 8080,

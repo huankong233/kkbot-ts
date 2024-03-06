@@ -9,15 +9,15 @@ const baseDir = getDir(import.meta)
 
 const pluginDirs = ['./plugins/builtInPlugins', './plugins/pigeon', './plugins/tools']
 const originPackages = {
-  'go-cqwebsocket': '^6.3.0',
-  axios: '^1.6.2',
-  'cli-color': '^2.0.3',
+  'go-cqwebsocket': '^6.3.2',
+  axios: '^1.6.7',
+  'cli-color': '^2.0.4',
   'compare-versions': '^6.1.0',
   'cz-customizable': '^7.0.0',
   jsonc: '^2.0.0',
   'mime-types': '^2.1.35',
   'node-emoji': '^2.1.3',
-  tsx: '^4.6.2'
+  tsx: '^4.7.1'
 }
 
 for (const pluginDir of pluginDirs) {

@@ -9,8 +9,8 @@ export interface botConfig {
     enable: boolean
     msg: string
   }
-  driver: 'go-cqhttp'
-  goCqhttpConnect: {
+  driver: 'go-cqhttp' | 'openShamrock'
+  connect: {
     host: string
     port: number
     accessToken: string

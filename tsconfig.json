@@ -12,6 +12,7 @@
     "moduleResolution": "NodeNext",
     // 允许导入 ts 文件
     "allowImportingTsExtensions": true,
+    "noEmit": true,
     // 目标为 ESNext
     "target": "ESNext",
     // 使用 NodeNext 模块

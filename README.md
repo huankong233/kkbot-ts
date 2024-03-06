@@ -4,7 +4,7 @@
 
 ## 🎉 [更新日志](./CHANGELOG.md)
 
-## 📚 [文档](https://blog.huankong.top/note/kkbot-ts)
+## 📚 [文档](https://blog.huankong.top/docs/kkbot-ts)
 
 ## ⭐ 星星
 

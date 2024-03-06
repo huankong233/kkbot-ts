@@ -17,8 +17,8 @@ export default async function () {
     const { botConfig } = global.config as { botConfig: botConfig }
     const { botData } = global.data as { botData: botData }
 
-    if (botConfig.driver === 'go-cqhttp') {
-      const bot = new CQWebSocket(botConfig.goCqhttpConnect)
+    if (botConfig.driver === 'go-cqhttp' || botConfig.driver === 'openShamrock') {
+      const bot = new CQWebSocket(botConfig.connect)
 
       let attempts = 1
 
@@ -42,7 +42,7 @@ export default async function () {
         logger.WARNING(`连接失败[/event]#${attempts}`)
         logger.ERROR(context)
 
-        if (!botConfig.goCqhttpConnect.reconnection) {
+        if (!botConfig.connect.reconnection) {
           if (context.code === 1006 && context.reason === '') {
             reject('可能是go-cqhttp地址错误')
           } else {
@@ -50,14 +50,14 @@ export default async function () {
           }
         }
 
-        if (attempts >= botConfig.goCqhttpConnect.reconnectionAttempts) {
+        if (attempts >= botConfig.connect.reconnectionAttempts) {
           if (context.code === 1006 && context.reason === '') {
             reject('可能是go-cqhttp地址错误')
           } else {
-            reject(`重试次数超过设置的${botConfig.goCqhttpConnect.reconnectionAttempts}次!`)
+            reject(`重试次数超过设置的${botConfig.connect.reconnectionAttempts}次!`)
           }
         } else {
-          setTimeout(() => bot.reconnect(), botConfig.goCqhttpConnect.reconnectionDelay)
+          setTimeout(() => bot.reconnect(), botConfig.connect.reconnectionDelay)
         }
 
         attempts++
@@ -86,8 +86,6 @@ export default async function () {
       initEvents()
 
       bot.connect()
-    } else if (botConfig.driver === 'openShamrock') {
-      // TODO: 未支持
     } else {
       throw new Error('未知驱动器')
     }
@@ -178,11 +176,16 @@ export async function connectSuccess() {
   const { botConfig } = global.config as { botConfig: botConfig }
   const { botData } = global.data as { botData: botData }
 
-  botData.ffmpeg = (
-    await bot.can_send_record().catch(_error => {
-      return { yes: false }
-    })
-  ).yes
+  if (botConfig.driver === 'openShamrock') {
+    botData.ffmpeg = true
+    logger.NOTICE('使用 openShamrock 强制开启语音支持')
+  } else {
+    botData.ffmpeg = (
+      await bot.can_send_record().catch(_error => {
+        return { yes: false }
+      })
+    ).yes
+  }
 
   botData.info = await bot.get_login_info()
 
