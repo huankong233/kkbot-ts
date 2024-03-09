@@ -1,10 +1,10 @@
 import { getFileBase64 } from '@/libs/fs.ts'
 import { confuseURL } from '@/libs/handleUrl.ts'
 import { formatTime } from '@/libs/time.ts'
-import { CQ } from 'go-cqwebsocket'
+import { Image, Text, SendMessageArray } from 'node-open-shamrock'
 
 class CParser {
-  [key: string]: (item: any) => Promise<string> | string
+  [key: string]: (item: any) => Promise<SendMessageArray> | SendMessageArray
 
   ascii2d = function (item: any) {
     let message = [`图片信息:${item.info}`, `链接:${confuseURL(item.source.link, true)}`]
@@ -19,7 +19,7 @@ class CParser {
 
     message.push(``)
 
-    return `${CQ.image(item.image)}${message.join('\n')}`
+    return [Image({ url: item.image }), Text({ text: message.join('\n') })]
   }
 
   SauceNAO = async function (item: any) {
@@ -29,11 +29,12 @@ class CParser {
 
     message.push(``)
 
-    return `${
+    return [
       item.image !== 'https://saucenao.com/' || item.image !== ''
-        ? CQ.image(`base64://${await getFileBase64(item.image)}`)
-        : ''
-    }${message.join('\n')}`
+        ? Image({ file: `base64://${await getFileBase64(item.image)}` })
+        : Text({ text: '' }),
+      Text({ text: message.join('\n') })
+    ]
   }
 
   IqDB = async function (item: any) {
@@ -44,7 +45,10 @@ class CParser {
       ``
     ]
 
-    return `${CQ.image(`base64://${await getFileBase64(item.image)}`)}${message.join('\n')}`
+    return [
+      Image({ file: `base64://${await getFileBase64(item.image)}` }),
+      Text({ text: message.join('\n') })
+    ]
   }
 
   TraceMoe = async function (item: any) {
@@ -59,7 +63,10 @@ class CParser {
       ``
     ]
 
-    return `${CQ.image(`base64://${await getFileBase64(item.image)}`)}${message.join('\n')}`
+    return [
+      Image({ file: `base64://${await getFileBase64(item.image)}` }),
+      Text({ text: message.join('\n') })
+    ]
   }
 
   AnimeTraceAnime = function (item: any) {
@@ -67,8 +74,8 @@ class CParser {
 
     const preview =
       item.preview !== 'fail unsupport image type'
-        ? CQ.image(`base64://${item.preview}`)
-        : '不支持处理的图片格式'
+        ? Image({ file: `base64://${item.preview}` })
+        : Text({ text: '不支持处理的图片格式' })
 
     let message = []
 
@@ -77,7 +84,7 @@ class CParser {
       message.push(`角色名: ${char.name}`, `动漫名: ${char.cartoonname}`)
     }
 
-    return `${preview}${message.join('\n')}`
+    return [preview, Text({ text: message.join('\n') })]
   }
 
   AnimeTraceGame = this.AnimeTraceAnime

@@ -1,11 +1,10 @@
 import { retryGet } from '@/libs/axios.ts'
 import { eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { replyMsg, sendMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from 'go-cqwebsocket'
 import { compare } from 'compare-versions'
 import { CronJob } from 'cron'
+import { SocketHandle } from 'node-open-shamrock'
 
 const logger = makeLogger({ pluginName: 'update' })
 
@@ -19,7 +18,7 @@ export default async () => {
 }
 
 async function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     if (command.name === '检查更新') await checkUpdate(context)
@@ -41,7 +40,7 @@ async function init() {
   )
 }
 
-async function checkUpdate(context?: CQEvent<'message'>['context']) {
+async function checkUpdate(context?: SocketHandle['message']) {
   const { botConfig, checkUpdateConfig } = global.config as {
     botConfig: botConfig
     checkUpdateConfig: checkUpdateConfig
@@ -70,8 +69,8 @@ async function checkUpdate(context?: CQEvent<'message'>['context']) {
           `当前版本: ${local_version}`
         ].join('\n')
         context
-          ? await replyMsg(context, message, { reply: true })
-          : await sendMsg(botConfig.admin, message)
+          ? await bot.handle_quick_operation_async({ context, operation: { reply: message } })
+          : await bot.send_private_message({ user_id: botConfig.admin, message })
       }
     } else {
       //需要更新，通知admin
@@ -81,8 +80,8 @@ async function checkUpdate(context?: CQEvent<'message'>['context']) {
         `当前版本: ${local_version}`
       ].join('\n')
       context
-        ? await replyMsg(context, message, { reply: true })
-        : await sendMsg(botConfig.admin, message)
+        ? await bot.handle_quick_operation_async({ context, operation: { reply: message } })
+        : await bot.send_private_message({ user_id: botConfig.admin, message })
     }
   }
 }

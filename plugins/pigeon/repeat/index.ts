@@ -1,7 +1,6 @@
 import { eventReg } from '@/libs/eventReg.ts'
 import { randomFloat } from '@/libs/random.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
-import type { CQEvent } from 'go-cqwebsocket'
+import { SocketHandle } from 'node-open-shamrock'
 
 export default async () => {
   init()
@@ -14,14 +13,14 @@ function init() {
 }
 
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     //屏蔽命令
     if (command) return
     await repeat(context)
   })
 }
 
-async function repeat(context: CQEvent<'message'>['context']) {
+async function repeat(context: SocketHandle['message']) {
   if (context.message_type === 'private') return
   const { group_id, user_id, message } = context
   const { repeatConfig } = global.config as { repeatConfig: repeatConfig }
@@ -49,7 +48,12 @@ async function repeat(context: CQEvent<'message'>['context']) {
         repeat[group_id].count++
         //判断次数
         if (repeat[group_id].count === repeatConfig.times) {
-          await replyMsg(context, message)
+          await bot.handle_quick_operation_async({
+            context,
+            operation: {
+              reply: message
+            }
+          })
         }
       }
     }
@@ -57,6 +61,11 @@ async function repeat(context: CQEvent<'message'>['context']) {
 
   //所有规则外还有一定概率触发
   if (randomFloat(0, 100) <= repeatConfig.commonProb) {
-    await replyMsg(context, message.toString())
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: message as string
+      }
+    })
   }
 }

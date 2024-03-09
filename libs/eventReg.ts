@@ -1,9 +1,12 @@
 import type { messageCallback, noticeCallback, requestCallback } from '@/global.d.ts'
-import { sortObjectArray } from '@/libs/array.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from 'go-cqwebsocket'
-import { CQ } from 'go-cqwebsocket'
+import { sortObjectArray } from '@/libs/array.ts'
+import {
+  ReceiveMessageArray,
+  SocketHandle,
+  convertCQCodeToJSON,
+  convertJSONToCQCode
+} from 'node-open-shamrock'
 
 /**
  * 事件快捷注册
@@ -70,18 +73,27 @@ export function eventReg(
  * @param commandName 命令名
  */
 export function haveAt(
-  context: CQEvent<'message'>['context'],
+  context: SocketHandle['message'],
   commandName: string = '@'
 ): commandFormat | false {
-  const { message, self_id } = context
+  const { message } = context
   const { botConfig } = global.config as { botConfig: botConfig }
 
-  const messageArr = CQ.parse(message)
-  const first = messageArr[0].valueOf()
-  if (!first) return false
+  let messageArr: ReceiveMessageArray = []
 
-  if (first.type === 'at' && first.data.qq === self_id.toString()) {
-    const parsedMessage = messageArr.slice(1).toString()
+  if (typeof message === 'string') {
+    messageArr = convertCQCodeToJSON(message) as ReceiveMessageArray
+  } else {
+    messageArr = message
+  }
+
+  if (messageArr.length === 0) return false
+
+  if (
+    messageArr[0].type === 'at' &&
+    bot.eventBus.status.self.user_id.toString() === messageArr[0].data.qq.toString()
+  ) {
+    const parsedMessage = convertJSONToCQCode(messageArr.slice(1))
     return format(`${botConfig.prefix}${commandName} ${parsedMessage}`)
   } else {
     return false
@@ -122,15 +134,18 @@ export function format(message: string): commandFormat | false {
  * @param paramsLength 需要的参数长度
  */
 export async function missingParams(
-  context: CQEvent<'message'>['context'],
+  context: SocketHandle['message'],
   command: commandFormat,
   paramsLength: number
 ) {
   const { botConfig } = global.config as { botConfig: botConfig }
 
   if (command.params.length < paramsLength) {
-    return replyMsg(context, `参数不足，请发送"${botConfig.prefix}帮助 ${command.name}"查看帮助`, {
-      reply: true
+    return bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: `参数不足，请发送"${botConfig.prefix}帮助 ${command.name}"查看帮助`
+      }
     })
   } else {
     return undefined

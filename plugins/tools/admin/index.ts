@@ -1,10 +1,8 @@
-import type { fakeContext } from '@/global.d.ts'
-import { getUserName } from '@/libs/Api.ts'
-import type { commandFormat } from '@/libs/eventReg.ts'
-import { eventReg, missingParams } from '@/libs/eventReg.ts'
-import { replyMsg, sendMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from 'go-cqwebsocket'
+import { getUserName } from '@/libs/Api.ts'
+import { commandFormat } from '@/libs/eventReg.ts'
+import { eventReg, missingParams } from '@/libs/eventReg.ts'
+import { SocketHandle } from 'node-open-shamrock'
 
 export default async () => {
   event()
@@ -16,15 +14,11 @@ export default async () => {
  */
 
 function event() {
-  eventReg('notice', async ({ context }) => {
-    await notice(context)
-  })
+  eventReg('notice', async context => await notice(context))
 
-  eventReg('request', async ({ context }) => {
-    await request(context)
-  })
+  eventReg('request', async context => await request(context))
 
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     switch (command.name) {
@@ -39,27 +33,25 @@ function event() {
 }
 
 //notice事件处理
-async function notice(context: CQEvent<'notice'>['context']) {
+async function notice(context: SocketHandle['notice']) {
   const { notice_type } = context
 
   if (notice_type === 'group_increase' || notice_type === 'group_decrease') {
     const { user_id, group_id, sub_type } = context
-    const fakeContext: fakeContext = {
-      message_type: 'group',
-      user_id,
-      group_id
-    }
 
-    if (sub_type === 'approve') {
-      await replyMsg(fakeContext, `${await getUserName(user_id)} 欢迎加群呀~ ヾ(≧▽≦*)o`)
-    } else if (sub_type === 'leave') {
-      await replyMsg(fakeContext, `${await getUserName(user_id)} 退群了 (*>.<*)`)
-    }
+    await bot.send_group_message({
+      group_id,
+      message:
+        sub_type === 'approve'
+          ? `${await getUserName(user_id)} 欢迎加群呀~ ヾ(≧▽≦*)o`
+          : // sub_type: leave
+            `${await getUserName(user_id)} 退群了 (*>.<*)`
+    })
   }
 }
 
 //request事件处理
-async function request(context: CQEvent<'request'>['context']) {
+async function request(context: SocketHandle['request']) {
   const { request_type } = context
   const { adminConfig } = global.config as { adminConfig: adminConfig }
 
@@ -88,7 +80,7 @@ async function request(context: CQEvent<'request'>['context']) {
 }
 
 //给admin发送通知
-async function sendNotice(context: CQEvent<'request'>['context'], name: string, auto = false) {
+async function sendNotice(context: SocketHandle['request'], name: string, auto = false) {
   const { request_type, flag, user_id, comment } = context
   const { botConfig } = global.config as { botConfig: botConfig }
 
@@ -110,12 +102,15 @@ async function sendNotice(context: CQEvent<'request'>['context'], name: string, 
     reply.push(str)
   }
 
-  await sendMsg(botConfig.admin, reply.join('\n'))
+  await bot.send_private_message({
+    user_id: botConfig.admin,
+    message: reply.join('\n')
+  })
 }
 
 //同意入群/加群请求
 async function invite(
-  context: CQEvent<'message'>['context'] | CQEvent<'request'>['context'],
+  context: SocketHandle['message'] | SocketHandle['request'],
   command: commandFormat
 ) {
   const { botConfig } = global.config as { botConfig: botConfig }
@@ -123,7 +118,10 @@ async function invite(
   if (context.post_type === 'message') {
     // 判断是否为管理员
     if (botConfig.admin !== context.user_id)
-      return await replyMsg(context, '你不是咱的管理员喵~', { reply: true })
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: { reply: '你不是咱的管理员喵~' }
+      })
 
     if (await missingParams(context, command, 2)) return
   }
@@ -133,25 +131,36 @@ async function invite(
   const approve = params[0] === '批准'
   const flag = params[1]
   const reason = params[2]
-  const sub_type = name === '加群' ? 'friend' : 'group'
+  const sub_type = name === '加群' ? 'add' : 'invite'
 
   await bot
-    .set_group_add_request(flag, sub_type, approve, reason)
+    .set_group_add_request({ flag, sub_type, approve, reason })
     .catch(async response => {
       response.status === 'failed'
         ? context.post_type === 'message'
-          ? await replyMsg(context, [`执行失败,失败原因:`, `${response.wording}`].join('\n'))
-          : await sendMsg(botConfig.admin, [`执行失败,失败原因:`, `${response.wording}`].join('\n'))
+          ? await bot.handle_quick_operation_async({
+              context,
+              operation: { reply: [`执行失败,失败原因:`, `${response.wording}`].join('\n') }
+            })
+          : await bot.send_private_message({
+              user_id: botConfig.admin,
+              message: [`执行失败,失败原因:`, `${response.wording}`].join('\n')
+            })
         : null
     })
     .finally(async () =>
-      context.post_type === 'message' ? await replyMsg(context, '执行成功(不代表处理结果)') : null
+      context.post_type === 'message'
+        ? await bot.handle_quick_operation_async({
+            context,
+            operation: { reply: '执行成功(不代表处理结果)' }
+          })
+        : null
     )
 }
 
 //同意加好友请求
 async function friend(
-  context: CQEvent<'message'>['context'] | CQEvent<'request'>['context'],
+  context: SocketHandle['message'] | SocketHandle['request'],
   command: commandFormat
 ) {
   const { botConfig } = global.config as { botConfig: botConfig }
@@ -159,7 +168,12 @@ async function friend(
   if (context.post_type === 'message') {
     // 判断是否为管理员
     if (botConfig.admin !== context.user_id)
-      return await replyMsg(context, '你不是咱的管理员喵~', { reply: true })
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: {
+          reply: '你不是咱的管理员喵~'
+        }
+      })
 
     if (await missingParams(context, command, 2)) return
   }
@@ -169,15 +183,26 @@ async function friend(
   const flag = params[1]
 
   await bot
-    .set_friend_add_request(flag, approve)
+    .set_friend_add_request({ flag, approve })
     .catch(async response => {
       response.status === 'failed'
         ? context.post_type === 'message'
-          ? await replyMsg(context, [`执行失败,失败原因:`, `${response.wording}`].join('\n'))
-          : await sendMsg(botConfig.admin, [`执行失败,失败原因:`, `${response.wording}`].join('\n'))
+          ? await bot.handle_quick_operation_async({
+              context,
+              operation: { reply: [`执行失败,失败原因:`, `${response.wording}`].join('\n') }
+            })
+          : await bot.send_private_message({
+              user_id: botConfig.admin,
+              message: [`执行失败,失败原因:`, `${response.wording}`].join('\n')
+            })
         : null
     })
     .finally(async () =>
-      context.post_type === 'message' ? await replyMsg(context, '执行成功(不代表处理结果)') : null
+      context.post_type === 'message'
+        ? await bot.handle_quick_operation_async({
+            context,
+            operation: { reply: '执行成功(不代表处理结果)' }
+          })
+        : null
     )
 }

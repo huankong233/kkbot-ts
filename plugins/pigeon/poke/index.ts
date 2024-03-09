@@ -1,9 +1,6 @@
-import type { fakeContext } from '@/global.ts'
 import { eventReg } from '@/libs/eventReg.ts'
 import { randomFloat, randomInt } from '@/libs/random.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
-import { mute } from '@/plugins/pigeon/mute/index.ts'
-import type { CQEvent } from 'go-cqwebsocket'
+import { SocketHandle } from 'node-open-shamrock'
 
 export default () => {
   init()
@@ -16,7 +13,7 @@ function init() {
 }
 
 function event() {
-  eventReg('notice', async ({ context }) => {
+  eventReg('notice', async context => {
     if (
       'group_id' in context &&
       context.notice_type === 'notify' &&
@@ -30,12 +27,10 @@ function event() {
 }
 
 //戳一戳
-async function poke(context: CQEvent<'notice.notify.poke.group'>['context']) {
-  const { group_id, user_id, self_id } = context
+async function poke(context: SocketHandle['notice.notify.poke.group']) {
+  const { group_id, user_id } = context
   const { pokeConfig } = global.config as { pokeConfig: pokeConfig }
   const { pokeData } = global.data as { pokeData: pokeData }
-
-  const fakeContext: fakeContext = { user_id, group_id, self_id, message_type: 'group' }
 
   //增加计数
   if (!pokeData.count[user_id]) pokeData.count[user_id] = 0
@@ -49,18 +44,39 @@ async function poke(context: CQEvent<'notice.notify.poke.group'>['context']) {
   if (pokeData.count[user_id] >= pokeConfig.banCount) {
     pokeData.count[user_id] = 0
 
-    const data = await mute(fakeContext, false, pokeConfig.banTime)
-    if (data) {
-      //禁言成功
-      replyed = true
-      return await replyMsg(
-        fakeContext,
-        pokeConfig.banReply[randomInt(0, pokeConfig.banReply.length - 1)]
-      )
-    }
+    //判断对方信息
+    const user = await bot.get_group_member_info({ group_id, user_id })
+
+    //判断自己信息
+    const self = await bot.get_group_member_info({
+      group_id,
+      user_id: bot.eventBus.status.self.user_id
+    })
+
+    if (self.data.role !== 'admin' && self.data.role !== 'owner') return false
+    if (self.data.role === 'admin' && user.data.role !== 'member') return false
+
+    const muteTime = randomInt(pokeConfig.banTime[0], pokeConfig.banTime[1])
+
+    await bot.set_group_ban({
+      group_id,
+      user_id,
+      duration: muteTime
+    })
+
+    replyed = true
+
+    //禁言成功
+    return await bot.send_group_message({
+      group_id,
+      message: pokeConfig.banReply[randomInt(0, pokeConfig.banReply.length - 1)]
+    })
   }
 
   //回复
   if (!replyed)
-    await replyMsg(fakeContext, pokeConfig.reply[randomInt(0, pokeConfig.reply.length - 1)])
+    await bot.send_group_message({
+      group_id,
+      message: pokeConfig.reply[randomInt(0, pokeConfig.reply.length - 1)]
+    })
 }

@@ -1,7 +1,6 @@
-import { replyMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from 'go-cqwebsocket'
 import type { searchImageConfig, searchImageData } from './config.d.ts'
+import { SocketHandle } from 'node-open-shamrock'
 
 export const searchInitialization = () => {
   const { searchImageData } = global.data as { searchImageData: searchImageData }
@@ -25,7 +24,7 @@ export const searchInitialization = () => {
  * 进入搜图模式
  * @param context
  */
-export const turnOnSearchMode = async (context: CQEvent<'message'>['context']) => {
+export const turnOnSearchMode = async (context: SocketHandle['message']) => {
   const { botConfig, searchImageConfig } = global.config as {
     botConfig: botConfig
     searchImageConfig: searchImageConfig
@@ -37,13 +36,15 @@ export const turnOnSearchMode = async (context: CQEvent<'message'>['context']) =
     surplus_time: searchImageConfig.autoLeave
   })
 
-  await replyMsg(
+  await bot.handle_quick_operation_async({
     context,
-    [
-      `${searchImageConfig.word.on_reply}`,
-      `记得说"${botConfig.prefix}${searchImageConfig.word.off}${botConfig.botName}"来退出搜图模式哦~`
-    ].join('\n')
-  )
+    operation: {
+      reply: [
+        `${searchImageConfig.word.on_reply}`,
+        `记得说"${botConfig.prefix}${searchImageConfig.word.off}${botConfig.botName}"来退出搜图模式哦~`
+      ].join('\n')
+    }
+  })
 }
 
 /**
@@ -51,7 +52,7 @@ export const turnOnSearchMode = async (context: CQEvent<'message'>['context']) =
  * @param context
  * @param manual 是否为手动退出
  */
-export const turnOffSearchMode = async (context: CQEvent<'message'>['context'], manual = true) => {
+export const turnOffSearchMode = async (context: SocketHandle['message'], manual = true) => {
   const { botConfig, searchImageConfig } = global.config as {
     botConfig: botConfig
     searchImageConfig: searchImageConfig
@@ -63,15 +64,22 @@ export const turnOffSearchMode = async (context: CQEvent<'message'>['context'], 
   )
 
   if (manual) {
-    await replyMsg(context, `${searchImageConfig.word.off_reply}`, { reply: true })
-  } else {
-    await replyMsg(
+    await bot.handle_quick_operation_async({
       context,
-      [
-        `已自动退出搜图模式`,
-        `下次记得说${botConfig.prefix}${searchImageConfig.word.off}${botConfig.botName}来退出搜图模式哦~`
-      ].join('\n')
-    )
+      operation: {
+        reply: `${searchImageConfig.word.off_reply}`
+      }
+    })
+  } else {
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: [
+          `已自动退出搜图模式`,
+          `下次记得说${botConfig.prefix}${searchImageConfig.word.off}${botConfig.botName}来退出搜图模式哦~`
+        ].join('\n')
+      }
+    })
   }
 }
 

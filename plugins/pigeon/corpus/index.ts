@@ -1,10 +1,8 @@
-import type { commandFormat } from '@/libs/eventReg.ts'
+import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
-import type { CQEvent, Tags } from 'go-cqwebsocket'
-import { CQ } from 'go-cqwebsocket'
+import { SocketHandle, convertCQCodeToJSON } from 'node-open-shamrock'
 
 const ENUM_SCENCE = {
   a: ['private', 'group'],
@@ -24,7 +22,7 @@ export default async () => {
 }
 
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     const { botConfig } = global.config as { botConfig: botConfig }
 
     if (!command) return await corpus(context)
@@ -37,15 +35,12 @@ function event() {
   })
 }
 
-function isCtxMatchScence(
-  { message_type }: CQEvent<'message'>['context'],
-  scence: 'a' | 'g' | 'p'
-) {
+function isCtxMatchScence({ message_type }: SocketHandle['message'], scence: 'a' | 'g' | 'p') {
   if (!(scence in ENUM_SCENCE)) return false
   return ENUM_SCENCE[scence].includes(message_type)
 }
 
-async function corpus(context: CQEvent<'message'>['context']) {
+async function corpus(context: SocketHandle['message']) {
   const { message } = context
   const { corpusData } = global.data as { corpusData: corpusData }
 
@@ -57,7 +52,7 @@ async function corpus(context: CQEvent<'message'>['context']) {
     const exec = regexp.exec(message.toString())
     if (!exec) continue
 
-    await replyMsg(context, reply)
+    await bot.handle_quick_operation_async({ context, operation: { reply, auto_reply: false } })
   }
 }
 
@@ -93,7 +88,7 @@ async function loadRules() {
 }
 
 // 学习
-async function learn(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function learn(context: SocketHandle['message'], command: commandFormat) {
   const { user_id } = context
   const { corpusConfig, botConfig } = global.config as {
     corpusConfig: corpusConfig
@@ -104,10 +99,10 @@ async function learn(context: CQEvent<'message'>['context'], command: commandFor
   if (await missingParams(context, command, 4)) return
 
   if (!(await reduce(user_id, corpusConfig.add, '添加关键字'))) {
-    return await replyMsg(context, '鸽子不足~', { reply: true })
+    return await bot.handle_quick_operation_async({ context, operation: { reply: '鸽子不足~' } })
   }
 
-  const messages = CQ.parse(params[0])
+  const messages = convertCQCodeToJSON(params[0])
   let keyword = 'default keyword'
   let mode = 0
 
@@ -115,13 +110,16 @@ async function learn(context: CQEvent<'message'>['context'], command: commandFor
   for (let i = 0; i < messages.length; i++) {
     const message = messages[i]
     if (type === null) {
-      type = message._type
+      type = message.type
       type === 'image'
-        ? ([keyword, mode] = [`\\[CQ:image,file=${(message as Tags.CQImage).file}`, 0])
-        : ([keyword, mode] = [message._data.text, parseInt(params[2])])
+        ? ([keyword, mode] = [`\\[CQ:image,file=${message.data.url}`, 0])
+        : ([keyword, mode] = [message.data.text, parseInt(params[2])])
     } else {
       await add(user_id, corpusConfig.add, '添加关键词失败')
-      return await replyMsg(context, `不能同时存在图片或文字哦~`, { reply: true })
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: { reply: '不能同时存在图片或文字哦~' }
+      })
     }
   }
 
@@ -131,20 +129,22 @@ async function learn(context: CQEvent<'message'>['context'], command: commandFor
   //判断参数是否合法
   if (!available.mode.includes(mode)) {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    return await replyMsg(
+    return await bot.handle_quick_operation_async({
       context,
-      `模式不合法,请发送"${botConfig.prefix}帮助 ${botConfig.botName}学习"查看细节`,
-      { reply: true }
-    )
+      operation: {
+        reply: `模式不合法,请发送"${botConfig.prefix}帮助 ${botConfig.botName}学习"查看细节`
+      }
+    })
   }
 
   if (!available.scene.includes(scene)) {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    return await replyMsg(
+    return await bot.handle_quick_operation_async({
       context,
-      `生效范围不合法,请发送"${botConfig.prefix}帮助 ${botConfig.botName}学习"查看细节`,
-      { reply: true }
-    )
+      operation: {
+        reply: `生效范围不合法,请发送"${botConfig.prefix}帮助 ${botConfig.botName}学习"查看细节`
+      }
+    })
   }
 
   //确保不重复
@@ -152,20 +152,35 @@ async function learn(context: CQEvent<'message'>['context'], command: commandFor
 
   if (repeat.length !== 0) {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    return await replyMsg(context, '这个"关键词"已经存在啦~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: `这个"关键词"已经存在啦~`
+      }
+    })
   }
 
   if (await database.insert({ user_id, keyword, mode, reply, scene }).into('corpus')) {
     await loadRules()
-    await replyMsg(context, `${botConfig.botName}学会啦~`, { reply: true })
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: `${botConfig.botName}学会啦~`
+      }
+    })
   } else {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    await replyMsg(context, '学习失败~', { reply: true })
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '学习失败~'
+      }
+    })
   }
 }
 
 //忘记
-async function forget(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function forget(context: SocketHandle['message'], command: commandFormat) {
   const { user_id } = context
   const { corpusConfig, botConfig } = global.config as {
     corpusConfig: corpusConfig
@@ -176,7 +191,12 @@ async function forget(context: CQEvent<'message'>['context'], command: commandFo
   if (await missingParams(context, command, 1)) return
 
   if (!(await reduce(user_id, corpusConfig.delete, '删除关键词'))) {
-    return await replyMsg(context, '鸽子不足~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '鸽子不足~'
+      }
+    })
   }
 
   const keyword = params[0]
@@ -186,17 +206,32 @@ async function forget(context: CQEvent<'message'>['context'], command: commandFo
 
   if (!data) {
     await add(user_id, corpusConfig.delete, '删除关键词失败')
-    return await replyMsg(context, '这个关键词不存在哦~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '这个关键词不存在哦~'
+      }
+    })
   }
 
   //判断所有者
   if (data.user_id !== user_id && botConfig.admin !== user_id) {
     await add(user_id, corpusConfig.delete, '删除关键词失败')
-    return await replyMsg(context, '删除失败，这不是你的词条哦', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '删除失败，这不是你的词条哦'
+      }
+    })
   }
 
   if (await database('corpus').where('id', data.id).update({ hide: 1 })) {
     await loadRules()
-    return await replyMsg(context, '删除成功啦~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '删除成功啦~'
+      }
+    })
   }
 }

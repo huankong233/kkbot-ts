@@ -1,9 +1,8 @@
 import { getUserName } from '@/libs/Api.ts'
-import type { commandFormat } from '@/libs/eventReg.ts'
+import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg } from '@/libs/eventReg.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import { getUserData } from '@/plugins/pigeon/pigeon/index.ts'
-import type { CQEvent } from 'go-cqwebsocket'
+import { SocketHandle } from 'node-open-shamrock'
 
 export default () => {
   event()
@@ -11,7 +10,7 @@ export default () => {
 
 //注册事件
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     const { name } = command
@@ -26,7 +25,7 @@ function event() {
 }
 
 //我的鸽子
-async function query(context: CQEvent<'message'>['context'], command?: commandFormat) {
+async function query(context: SocketHandle['message'], command?: commandFormat) {
   let { user_id } = context
 
   if (command && command.params.length > 0) {
@@ -36,14 +35,23 @@ async function query(context: CQEvent<'message'>['context'], command?: commandFo
   const userData = await getUserData(user_id)
   const username = await getUserName(user_id)
 
-  if (!userData) return await replyMsg(context, `${username}是谁呀,咱不认识呢~`, { reply: true })
+  if (!userData)
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: `${username}是谁呀,咱不认识呢~`
+      }
+    })
 
-  await replyMsg(context, `用户${username}拥有${userData.pigeon_num}只鸽子`, {
-    reply: true
+  await bot.handle_quick_operation_async({
+    context,
+    operation: {
+      reply: `用户${username}拥有${userData.pigeon_num}只鸽子`
+    }
   })
 }
 
-async function rankingList(context: CQEvent<'message'>['context']) {
+async function rankingList(context: SocketHandle['message']) {
   // 鸽子排行榜
   const data = await database
     .from('pigeon')
@@ -51,7 +59,12 @@ async function rankingList(context: CQEvent<'message'>['context']) {
     .orderBy([{ column: 'pigeon_num', order: 'DESC' }])
 
   if (data.length === 0) {
-    await replyMsg(context, '还没有用户哦~', { reply: true })
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '还没有用户哦~'
+      }
+    })
   } else {
     let board = ['排行榜:']
     await Promise.all(
@@ -61,6 +74,12 @@ async function rankingList(context: CQEvent<'message'>['context']) {
         board.push(`第${index}名 名字:"${username}" 拥有${value.pigeon_num}只鸽子`)
       })
     )
-    await replyMsg(context, board.join('\n'), { reply: true })
+
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: board.join('\n')
+      }
+    })
   }
 }

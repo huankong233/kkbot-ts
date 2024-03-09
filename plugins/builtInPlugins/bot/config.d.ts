@@ -1,5 +1,3 @@
-import type { Interfaces } from 'go-cqwebsocket'
-
 export interface botConfig {
   configName: string
   botName: string
@@ -9,19 +7,18 @@ export interface botConfig {
     enable: boolean
     msg: string
   }
-  driver: 'go-cqhttp' | 'openShamrock'
   connect: {
+    protocol: 'ws' | 'wss'
     host: string
     port: number
     accessToken: string
     reconnection: boolean
     reconnectionAttempts: number
     reconnectionDelay: number
+    receive: 'CQCode' | 'JSON'
   }
 }
 
 export interface botData {
   wsType: '/api' | '/event'
-  ffmpeg: boolean
-  info: Interfaces.LoginInfo
 }

@@ -66,5 +66,6 @@
   "diffEditor.ignoreTrimWhitespace": false,
   "liveServer.settings.donotVerifyTags": true,
   "files.eol": "\n",
-  "tabnine.experimentalAutoImports": true
+  "tabnine.experimentalAutoImports": true,
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }

@@ -26,9 +26,6 @@ dependencies:
   dayjs:
     specifier: 1.11.10
     version: 1.11.10
-  go-cqwebsocket:
-    specifier: ^6.3.1
-    version: 6.3.1
   image_searcher:
     specifier: 0.2.5
     version: 0.2.5
@@ -53,6 +50,9 @@ dependencies:
   node-global-proxy:
     specifier: 1.0.1
     version: 1.0.1
+  node-open-shamrock:
+    specifier: ^0.0.6
+    version: 0.0.6
   tsx:
     specifier: ^4.7.1
     version: 4.7.1
@@ -1358,16 +1358,6 @@ packages:
       define-properties: 1.2.1
     dev: false
 
-  /go-cqwebsocket@6.3.1:
-    resolution: {integrity: sha512-n9zGk1a0PZHL32j8Y7T+6Vm3KqsXPMIuHLP0O9/5aoruXhL+i71RGGcGrTJ7Y9FpQ545KwqzfAY743vaG3AKYA==}
-    engines: {node: '>=14'}
-    dependencies:
-      ws: 8.16.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-    dev: false
-
   /gopd@1.0.1:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
     dependencies:
@@ -1822,6 +1812,15 @@ packages:
     dependencies:
       global-agent: 2.2.0
       global-tunnel-ng: 2.7.1
+    dev: false
+
+  /node-open-shamrock@0.0.6:
+    resolution: {integrity: sha512-GOQbP2UhcWoS/70k3qV0P5cWcKdHIwGTZyrvxMhrRzCG+5r0QegFktxklxinMq8wzJG31P2fBCCanhBZVE7LTQ==}
+    dependencies:
+      ws: 8.16.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
     dev: false
 
   /nodemon@3.1.0:

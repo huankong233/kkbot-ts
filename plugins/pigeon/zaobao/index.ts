@@ -1,14 +1,11 @@
-import type { fakeContext } from '@/global.d.ts'
 import { retryGet } from '@/libs/axios.ts'
 import { commandFormat, eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
 import { retryAsync } from '@/libs/retry.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import { sleep } from '@/libs/sleep.ts'
 import { getDate } from '@/libs/time.ts'
-import type { CQEvent } from 'go-cqwebsocket'
-import { CQ } from 'go-cqwebsocket'
 import { CronJob } from 'cron'
+import { Image, SocketHandle, convertJSONToCQCode } from 'node-open-shamrock'
 
 const logger = makeLogger({ pluginName: 'zaobao' })
 
@@ -19,7 +16,7 @@ export default async () => {
 }
 
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
     if (command.name === '早报') await zaobao(context, command)
   })
@@ -84,16 +81,15 @@ async function init() {
             temp[type] = message
           }
 
-          const fakeContext: fakeContext = {
-            message_type: 'group',
-            group_id: groups[crontab][i].group_id,
-            user_id: 123
-          }
-
-          await replyMsg(fakeContext, message).catch(err => {
-            logger.ERROR(err)
-            logger.WARNING('早报发送失败', { group_id })
-          })
+          await bot
+            .send_group_message({
+              group_id: groups[crontab][i].group_id,
+              message
+            })
+            .catch(err => {
+              logger.ERROR(err)
+              logger.WARNING('早报发送失败', { group_id })
+            })
           await sleep(zaobaoConfig.cd * 1000)
         }
       },
@@ -103,12 +99,17 @@ async function init() {
   }
 }
 
-async function zaobao(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function zaobao(context: SocketHandle['message'], command: commandFormat) {
   let type: zaobaoConfig['type'] = '每天60秒'
   if (command.params && command.params.length > 0 && urls.get(command.params[0]))
     type = command.params[0] as zaobaoConfig['type']
 
-  await replyMsg(context, await prepareMessage(false, type))
+  await bot.handle_quick_operation_async({
+    context,
+    operation: {
+      reply: await prepareMessage(false, type)
+    }
+  })
 }
 
 const urls = new Map([
@@ -161,7 +162,7 @@ async function prepareMessage(checkDate: boolean, type?: zaobaoConfig['type']) {
   }
 
   if (response) {
-    return CQ.image(params['getImage'](response)).toString()
+    return convertJSONToCQCode(Image({ url: params['getImage'](response) }))
   } else {
     return '早报获取失败'
   }

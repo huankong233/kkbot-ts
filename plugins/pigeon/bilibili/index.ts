@@ -2,14 +2,19 @@
 import { retryHead } from '@/libs/axios.ts'
 import { eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { parseJSON } from '@/libs/praseJSON.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
-import type { CQEvent } from 'go-cqwebsocket'
-import { CQ } from 'go-cqwebsocket'
 import { getArticleInfo } from './libs/article.ts'
 import { getDynamicInfo } from './libs/dynamic.ts'
 import { getLiveRoomInfo } from './libs/live.ts'
 import { getVideoInfo } from './libs/video.ts'
+import {
+  Image,
+  ReceiveMessageArray,
+  SendMessageArray,
+  SendMessageObject,
+  SocketHandle,
+  convertCQCodeToJSON
+} from 'node-open-shamrock'
+import { jsonc } from 'jsonc'
 
 export const logger = makeLogger({ pluginName: 'bilibili' })
 
@@ -18,10 +23,10 @@ export default async () => {
 }
 
 function event() {
-  eventReg('message', async ({ context }) => await bilibiliHandler(context))
+  eventReg('message', async context => await bilibiliHandler(context))
 }
 
-async function bilibiliHandler(context: CQEvent<'message'>['context']) {
+async function bilibiliHandler(context: SocketHandle['message']) {
   const { bilibiliConfig } = global.config as { bilibiliConfig: bilibiliConfig }
   const { getInfo } = bilibiliConfig
   if (
@@ -37,20 +42,24 @@ async function bilibiliHandler(context: CQEvent<'message'>['context']) {
   }
 
   let { message } = context
-  message = message.toString()
+  if (typeof message === 'string') {
+    message = convertCQCodeToJSON(message) as ReceiveMessageArray
+  }
+  const firstMessage = message[0]
 
-  const { url, isMiniProgram = false } =
+  let { url, isMiniProgram = false } =
     (() => {
-      if (message.includes('com.tencent.miniapp_01')) {
+      if (firstMessage.type !== 'json') return
+      const data = jsonc.parse(firstMessage.data.data)
+
+      if (firstMessage.data.data.includes('com.tencent.miniapp_01')) {
         // 小程序
-        const data = parseJSON(message)
         return {
           url: data?.meta?.detail_1?.qqdocurl,
           isMiniProgram: true
         }
-      } else if (message.includes('com.tencent.structmsg')) {
+      } else if (firstMessage.data.data.includes('com.tencent.structmsg')) {
         // 结构化消息
-        const data = parseJSON(message)
         return {
           url: data?.meta?.news?.jumpUrl,
           isMiniProgram: false
@@ -58,14 +67,18 @@ async function bilibiliHandler(context: CQEvent<'message'>['context']) {
       }
     })() || {}
 
-  const param = await getIdFromMsg(url || message)
+  if (firstMessage.type === 'text') {
+    url = firstMessage.data.text
+  }
+
+  const param = await getIdFromMsg(url)
   const { avid, bvid, dyid, arid, lrid } = param
 
   if (bilibiliConfig.despise && isMiniProgram && (avid || bvid || dyid || arid || lrid)) {
-    await replyMsg(
+    await bot.handle_quick_operation_async({
       context,
-      CQ.image('https://i.loli.net/2020/04/27/HegAkGhcr6lbPXv.png').toString()
-    )
+      operation: { reply: Image({ url: 'https://i.loli.net/2020/04/27/HegAkGhcr6lbPXv.png' }) }
+    })
   }
 
   if (getInfo.getVideoInfo && (avid || bvid)) {
@@ -86,13 +99,16 @@ async function bilibiliHandler(context: CQEvent<'message'>['context']) {
 }
 
 async function reply(
-  context: CQEvent<'message'>['context'],
-  message: string,
+  context: SocketHandle['message'],
+  message: SendMessageArray | SendMessageObject,
   isMiniProgram: boolean
 ) {
-  await replyMsg(context, message)
+  await bot.handle_quick_operation_async({
+    context,
+    operation: { reply: message }
+  })
   if (isMiniProgram) {
-    await bot.delete_msg(context.message_id)
+    await bot.delete_message({ message_id: context.message_id })
   }
 }
 

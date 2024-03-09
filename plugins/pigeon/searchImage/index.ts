@@ -2,11 +2,9 @@ import { eventReg } from '@/libs/eventReg.ts'
 import { downloadFile } from '@/libs/fs.ts'
 import { getUniversalImgURL } from '@/libs/handleUrl.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { replyMsg, sendForwardMsg } from '@/libs/sendMsg.ts'
-import type { botConfig, botData } from '@/plugins/builtInPlugins/bot/config.d.ts'
+import { sendForwardMsg } from '@/libs/sendMsg.ts'
+import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
-import type { CQEvent } from 'go-cqwebsocket'
-import { CQ } from 'go-cqwebsocket'
 import fs from 'fs'
 import { AnimeTrace, IqDB, SauceNAO, TraceMoe, ascii2d } from 'image_searcher'
 import type {
@@ -24,6 +22,7 @@ import {
   turnOnSearchMode
 } from './control.ts'
 import { Parser } from './parse.ts'
+import { Image, Node, SocketHandle, convertCQCodeToJSON } from 'node-open-shamrock'
 
 export const logger = makeLogger({ pluginName: 'searchImage' })
 
@@ -40,7 +39,7 @@ function event() {
     searchImageConfig: searchImageConfig
   }
 
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     if (command.name === `${botConfig.botName}${searchImageConfig.word.on}`) {
@@ -50,7 +49,7 @@ function event() {
 
   eventReg(
     'message',
-    async ({ context }, command) => {
+    async (context, command) => {
       if (isSearchMode(context.user_id)) {
         if (command && command.name === `${searchImageConfig.word.off}${botConfig.botName}`) {
           // 退出搜图模式
@@ -65,37 +64,48 @@ function event() {
   )
 }
 
-async function search(context: CQEvent<'message'>['context']) {
+async function search(context: SocketHandle['message']) {
   const { user_id } = context
   const { searchImageConfig } = global.config as { searchImageConfig: searchImageConfig }
 
   //先下载文件
-  let messageArray = CQ.parse(context.message)
+  let messageArray =
+    typeof context.message === 'string' ? convertCQCodeToJSON(context.message) : context.message
 
   let receive = false
 
   for (let i = 0; i < messageArray.length; i++) {
     const message = messageArray[i]
-    if (message._type === 'image') {
+    if (message.type === 'image') {
       //扣除鸽子
       if (!(await reduce(user_id, searchImageConfig.reduce, '搜图'))) {
-        return await replyMsg(context, `搜索失败,鸽子不足~`, { reply: true })
+        return await bot.handle_quick_operation_async({
+          context,
+          operation: {
+            reply: `搜索失败,鸽子不足~`
+          }
+        })
       }
 
       if (!receive) {
         receive = true
-        await replyMsg(context, `${searchImageConfig.word.receive}`, { reply: true })
+        await bot.handle_quick_operation_async({
+          context,
+          operation: {
+            reply: `${searchImageConfig.word.receive}`
+          }
+        })
       }
 
       //刷新时间
       refreshTimeOfAutoLeave(context.user_id)
 
-      await imageHandler(context, message._data.url)
+      await imageHandler(context, message.data.url)
     }
   }
 }
 
-async function imageHandler(context: CQEvent<'message'>['context'], url: string) {
+async function imageHandler(context: SocketHandle['message'], url: string) {
   const { searchImageConfig } = global.config as { searchImageConfig: searchImageConfig }
 
   //图片url
@@ -241,13 +251,12 @@ async function request(callbacks: searchImageCallback[]): Promise<searchImageRes
 
 //整理数据
 async function parse(
-  context: CQEvent<'message'>['context'],
+  context: SocketHandle['message'],
   res: searchImageResult[],
   originUrl: string
 ) {
   const { user_id } = context
   const { searchImageConfig } = global.config as { searchImageConfig: searchImageConfig }
-  const { botData } = global.data as { botData: botData }
 
   let promises = []
 
@@ -259,11 +268,9 @@ async function parse(
         if (!datum.success) {
           //赔偿
           await add(user_id, searchImageConfig.back, `${datum.name}搜图失败赔偿`)
-          return CQ.node(
-            botData.info.nickname,
-            botData.info.user_id,
-            `${datum.name}搜图失败力~已赔偿鸽子${searchImageConfig.back}只`
-          )
+          return Node({
+            content: `${datum.name}搜图失败力~已赔偿鸽子${searchImageConfig.back}只`
+          })
         }
 
         let message = `${datum.name}(耗时:${Math.floor(datum.cost)}ms):\n`
@@ -281,20 +288,22 @@ async function parse(
 
         if (debug) logger.DEBUG(`[搜图] 引擎:${datum.name}数据处理完成`)
 
-        const node = CQ.node(botData.info.nickname, botData.info.user_id, message)
+        const node = Node({ content: message })
         return node
       })()
     )
   }
 
-  const messages = [
-    CQ.node(botData.info.nickname, botData.info.user_id, CQ.image(originUrl).toString()),
-    ...(await Promise.all(promises))
-  ]
+  const messages = [Node({ content: Image({ url: originUrl }) }), ...(await Promise.all(promises))]
 
   //发送
   await sendForwardMsg(context, messages).catch(async () => {
-    await replyMsg(context, '发送合并消息失败，可以尝试私聊我哦~(鸽子已返还)')
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '发送合并消息失败，可以尝试私聊我哦~(鸽子已返还)'
+      }
+    })
     await add(user_id, searchImageConfig.reduce, `搜图合并消息发送失败赔偿`)
   })
 }

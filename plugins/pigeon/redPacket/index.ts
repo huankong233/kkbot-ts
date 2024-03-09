@@ -1,11 +1,10 @@
 import { getUserName } from '@/libs/Api.ts'
-import type { commandFormat } from '@/libs/eventReg.ts'
+import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { getRangeCode, randomInt } from '@/libs/random.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
-import type { CQEvent } from 'go-cqwebsocket'
 import { jsonc } from 'jsonc'
+import { SocketHandle } from 'node-open-shamrock'
 
 export default async () => {
   event()
@@ -16,7 +15,7 @@ export default async () => {
 
 //注册事件
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     await get(context)
 
     if (!command) return
@@ -30,7 +29,7 @@ function event() {
 }
 
 //我的鸽子
-async function give(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function give(context: SocketHandle['message'], command: commandFormat) {
   const { user_id } = context
 
   if (await missingParams(context, command, 2)) return
@@ -45,25 +44,51 @@ async function give(context: CQEvent<'message'>['context'], command: commandForm
   const code = params[2] ?? getRangeCode()
 
   if (redPacket_num <= 0 || pigeon_num <= 0) {
-    return await replyMsg(context, '红包发送失败,红包数量和鸽子数都不能<=0', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '红包发送失败,红包数量和鸽子数都不能<=0'
+      }
+    })
   }
 
   const item = await database.select('*').where({ code }).from('red_packet').first()
-  if (item) return await replyMsg(context, '红包发送失败,该口令已存在', { reply: true })
+  if (item)
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '红包发送失败,该口令已存在'
+      }
+    })
 
   //校验合理性
   const pre = pigeon_num / redPacket_num
 
   if (pre < 1) {
-    return await replyMsg(context, '红包发送失败,每个包需要至少一只鸽子', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '红包发送失败,每个包需要至少一只鸽子'
+      }
+    })
   }
 
   if (Math.floor(pre) !== pre) {
-    return await replyMsg(context, '红包发送失败,每个包里的鸽子数需要为整数', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '红包发送失败,每个包里的鸽子数需要为整数'
+      }
+    })
   }
 
   if (!(await reduce(user_id, pigeon_num, `发送鸽子红包_${code}`))) {
-    return await replyMsg(context, '红包发送失败,账户鸽子不足', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '红包发送失败,账户鸽子不足'
+      }
+    })
   }
 
   //插入红包
@@ -79,10 +104,15 @@ async function give(context: CQEvent<'message'>['context'], command: commandForm
 
   //更新红包列表
   await freshRedPacketList()
-  await replyMsg(context, `富哥发红包了!口令:${code}`)
+  await bot.handle_quick_operation_async({
+    context,
+    operation: {
+      reply: `富哥发红包了!口令:${code}`
+    }
+  })
 }
 
-async function get(context: CQEvent<'message'>['context']) {
+async function get(context: SocketHandle['message']) {
   const { user_id, message } = context
   const { redPacketData } = global.data as { redPacketData: redPacketData }
   const { redPackets } = redPacketData
@@ -97,7 +127,12 @@ async function get(context: CQEvent<'message'>['context']) {
     //领取过
     const pickedUserJSON = jsonc.parse(picked_user)
     if (pickedUserJSON.indexOf(user_id) !== -1) {
-      await replyMsg(context, '红包领取过了哦,不要贪心啦~', { reply: true })
+      await bot.handle_quick_operation_async({
+        context,
+        operation: {
+          reply: '红包领取过了哦,不要贪心啦~'
+        }
+      })
       continue
     }
 
@@ -118,8 +153,11 @@ async function get(context: CQEvent<'message'>['context']) {
       .where('id', item.id)
       .from('red_packet')
 
-    await replyMsg(context, `红包${item.code}领取成功,获得${getPigeonNum}只鸽子~`, {
-      reply: true
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: `红包${item.code}领取成功,获得${getPigeonNum}只鸽子~`
+      }
     })
   }
 
@@ -127,11 +165,16 @@ async function get(context: CQEvent<'message'>['context']) {
   await freshRedPacketList()
 }
 
-async function getAll(context: CQEvent<'message'>['context']) {
+async function getAll(context: SocketHandle['message']) {
   const { redPacketData } = global.data as { redPacketData: redPacketData }
   const { redPackets } = redPacketData
   if (redPackets.length === 0) {
-    return await replyMsg(context, '暂时还没有红包哦~要不你发一个?', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '暂时还没有红包哦~要不你发一个?'
+      }
+    })
   }
 
   let msg = ['剩余红包:']
@@ -151,7 +194,12 @@ async function getAll(context: CQEvent<'message'>['context']) {
     )
   }
 
-  await replyMsg(context, msg.join('\n'), { reply: true })
+  await bot.handle_quick_operation_async({
+    context,
+    operation: {
+      reply: msg.join('\n')
+    }
+  })
 }
 
 async function freshRedPacketList() {

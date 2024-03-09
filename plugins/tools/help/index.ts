@@ -1,10 +1,9 @@
-import type { commandFormat } from '@/libs/eventReg.ts'
+import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg } from '@/libs/eventReg.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from 'go-cqwebsocket'
 import fs from 'fs'
 import { jsonc } from 'jsonc'
+import { SocketHandle } from 'node-open-shamrock'
 import path from 'path'
 
 export default async () => {
@@ -14,7 +13,7 @@ export default async () => {
 }
 
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     if (command.name === '帮助' || command.name === 'help') {
@@ -40,7 +39,7 @@ async function initial() {
   helpData['commandList'] = commandList
 }
 
-async function help(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function help(context: SocketHandle['message'], command: commandFormat) {
   const { botConfig } = global.config as { botConfig: botConfig }
   const { helpData } = global.data as { helpData: helpData }
   const { user_id } = context
@@ -50,17 +49,22 @@ async function help(context: CQEvent<'message'>['context'], command: commandForm
 
   if (name) {
     const command = helpData.commandList.find(item => item.commandName === name)
-    if (!command) return await replyMsg(context, '没有这个命令哦~', { reply: true })
+    if (!command)
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: { reply: '没有这个命令哦~' }
+      })
 
-    await replyMsg(
+    await bot.handle_quick_operation_async({
       context,
-      [
-        `命令: ${command.commandName}`,
-        `简介([ ] 为必选参数 ( ) 为可选参数): `,
-        `${command.commandDescription.join('\n')}`
-      ].join('\n'),
-      { reply: true }
-    )
+      operation: {
+        reply: [
+          `命令: ${command.commandName}`,
+          `简介([ ] 为必选参数 ( ) 为可选参数): `,
+          `${command.commandDescription.join('\n')}`
+        ].join('\n')
+      }
+    })
   } else {
     let str: string[] = []
     helpData.commandList.forEach(command => {
@@ -71,10 +75,13 @@ async function help(context: CQEvent<'message'>['context'], command: commandForm
       }
     })
 
-    await replyMsg(
+    await bot.handle_quick_operation_async({
       context,
-      [`使用"${botConfig.prefix}帮助 命令名称"来获取详情`, `命令列表: `].join('\n') + str.join(','),
-      { reply: true }
-    )
+      operation: {
+        reply:
+          [`使用"${botConfig.prefix}帮助 命令名称"来获取详情`, `命令列表: `].join('\n') +
+          str.join(',')
+      }
+    })
   }
 }

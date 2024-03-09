@@ -1,10 +1,9 @@
+import type { botConfig, botData } from './config.d.ts'
 import { format } from '@/libs/eventReg.ts'
 import { globalReg } from '@/libs/globalReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { sendMsg } from '@/libs/sendMsg.ts'
-import { CQ, CQWebSocket } from 'go-cqwebsocket'
+import { SRWebsocket } from 'node-open-shamrock'
 import * as emoji from 'node-emoji'
-import type { botConfig, botData } from './config.d.ts'
 
 const logger = makeLogger({ pluginName: 'bot', subModule: 'connect' })
 const eventLogger = logger.changeSubModule('events')
@@ -17,78 +16,66 @@ export default async function () {
     const { botConfig } = global.config as { botConfig: botConfig }
     const { botData } = global.data as { botData: botData }
 
-    if (botConfig.driver === 'go-cqhttp' || botConfig.driver === 'openShamrock') {
-      const bot = new CQWebSocket(botConfig.connect)
+    const bot = new SRWebsocket(botConfig.connect)
 
-      let attempts = 1
+    let attempts = 1
 
-      //注册全局变量
-      globalReg({ bot })
+    //注册全局变量
+    globalReg({ bot })
 
-      bot.on('socket.connecting', function () {
-        logger.INFO(`连接中[/api]#${attempts}`)
-      })
+    bot.on('socket.apiConnecting', function () {
+      logger.INFO(`连接中[/api]#${attempts}`)
+    })
 
-      bot.on('socket.connectingEvent', function () {
-        logger.INFO(`连接中[/event]#${attempts}`)
-      })
+    bot.on('socket.eventConnecting', function () {
+      logger.INFO(`连接中[/event]#${attempts}`)
+    })
 
-      bot.on('socket.error', function ({ context }) {
-        logger.WARNING(`连接失败[/api]#${attempts}`)
-        logger.ERROR(context)
-      })
+    bot.on('socket.apiError', function (context) {
+      logger.WARNING(`连接失败[/api]#${attempts}`)
+      logger.ERROR(context)
+    })
 
-      bot.on('socket.errorEvent', function ({ context }) {
-        logger.WARNING(`连接失败[/event]#${attempts}`)
-        logger.ERROR(context)
+    bot.on('socket.eventError', function (context) {
+      logger.WARNING(`连接失败[/event]#${attempts}`)
+      logger.ERROR(context)
 
-        if (!botConfig.connect.reconnection) {
-          if (context.code === 1006 && context.reason === '') {
-            reject('可能是go-cqhttp地址错误')
-          } else {
-            reject(`连接失败!`)
-          }
-        }
+      if (!botConfig.connect.reconnection) {
+        reject(`连接失败!`)
+      }
 
-        if (attempts >= botConfig.connect.reconnectionAttempts) {
-          if (context.code === 1006 && context.reason === '') {
-            reject('可能是go-cqhttp地址错误')
-          } else {
-            reject(`重试次数超过设置的${botConfig.connect.reconnectionAttempts}次!`)
-          }
-        } else {
-          setTimeout(() => bot.reconnect(), botConfig.connect.reconnectionDelay)
-        }
+      if (attempts >= botConfig.connect.reconnectionAttempts) {
+        reject(`重试次数超过设置的${botConfig.connect.reconnectionAttempts}次!`)
+      } else {
+        setTimeout(() => bot.reconnect(), botConfig.connect.reconnectionDelay)
+      }
 
-        attempts++
-      })
+      attempts++
+    })
 
-      bot.on('socket.open', async function () {
-        logger.NOTICE(`连接成功[/api]#${attempts}`)
-        if (botData.wsType === '/event') {
-          await connectSuccess()
-          resolve(true)
-        } else {
-          botData.wsType = '/api'
-        }
-      })
+    bot.on('socket.apiOpen', async function () {
+      logger.NOTICE(`连接成功[/api]#${attempts}`)
+      if (botData.wsType === '/event') {
+        await connectSuccess()
+        resolve(true)
+      } else {
+        botData.wsType = '/api'
+      }
+    })
 
-      bot.on('socket.openEvent', async function () {
-        logger.NOTICE(`连接成功[/event]#${attempts}`)
-        if (botData.wsType === '/api') {
-          await connectSuccess()
-          resolve(true)
-        } else {
-          botData.wsType = '/event'
-        }
-      })
+    bot.on('socket.eventOpen', async function () {
+      logger.NOTICE(`连接成功[/event]#${attempts}`)
+      if (botData.wsType === '/api') {
+        await connectSuccess()
+        resolve(true)
+      } else {
+        botData.wsType = '/event'
+      }
+    })
 
-      initEvents()
+    initEvents()
 
-      bot.connect()
-    } else {
-      throw new Error('未知驱动器')
-    }
+    bot.connect()
   })
 }
 
@@ -103,17 +90,16 @@ function initEvents() {
   }
 
   //事件处理
-  bot.on('message', async event => {
+  bot.on('message', async context => {
     const { message: events } = global.events
-    const { context } = event
 
     if (debug) eventLogger.DEBUG(`收到信息:\n`, context)
 
-    context.message = emoji.unemojify(CQ.unescape(context.message.toString().trim()))
+    context.message = emoji.unemojify(context.message.toString().trim())
 
     for (let i = 0; i < events.length; i++) {
       try {
-        const response = await events[i].callback(event, format(context.message))
+        const response = await events[i].callback(context, format(context.message))
         if (response === 'quit') break
       } catch (error) {
         eventLogger.WARNING(`插件${events[i].pluginName}运行出错`)
@@ -126,15 +112,14 @@ function initEvents() {
     }
   })
 
-  bot.on('notice', async event => {
+  bot.on('notice', async context => {
     const { notice: events } = global.events
-    const { context } = event
 
     if (debug) eventLogger.DEBUG(`收到通知:\n`, context)
 
     for (let i = 0; i < events.length; i++) {
       try {
-        const response = await events[i].callback(event)
+        const response = await events[i].callback(context)
         if (response === 'quit') break
       } catch (error) {
         eventLogger.WARNING(`插件${events[i].pluginName}运行出错`)
@@ -147,15 +132,14 @@ function initEvents() {
     }
   })
 
-  bot.on('request', async event => {
+  bot.on('request', async context => {
     const { request: events } = global.events
-    const { context } = event
 
     if (debug) eventLogger.DEBUG(`收到请求:\n`, context)
 
     for (let i = 0; i < events.length; i++) {
       try {
-        const response = await events[i].callback(event)
+        const response = await events[i].callback(context)
         if (response === 'quit') break
       } catch (error) {
         eventLogger.WARNING(`插件${events[i].pluginName}运行出错`)
@@ -174,22 +158,7 @@ function initEvents() {
  */
 export async function connectSuccess() {
   const { botConfig } = global.config as { botConfig: botConfig }
-  const { botData } = global.data as { botData: botData }
-
-  if (botConfig.driver === 'openShamrock') {
-    botData.ffmpeg = true
-    logger.NOTICE('使用 openShamrock 强制开启语音支持')
-  } else {
-    botData.ffmpeg = (
-      await bot.can_send_record().catch(_error => {
-        return { yes: false }
-      })
-    ).yes
-  }
-
-  botData.info = await bot.get_login_info()
-
   if (dev || !botConfig.online.enable) return
   if (botConfig.admin <= 0) return logger.NOTICE('未设置管理员账户,请检查!')
-  await sendMsg(botConfig.admin, `${botConfig.online.msg}`)
+  await bot.send_private_message({ user_id: botConfig.admin, message: `${botConfig.online.msg}` })
 }

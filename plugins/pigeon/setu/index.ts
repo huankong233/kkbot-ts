@@ -2,13 +2,11 @@ import { retryGet, retryPost } from '@/libs/axios.ts'
 import { eventReg } from '@/libs/eventReg.ts'
 import { confuseURL } from '@/libs/handleUrl.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 import { isToday } from '@/libs/time.ts'
-import type { CQEvent } from 'go-cqwebsocket'
-import { CQ } from 'go-cqwebsocket'
 import { AxiosError } from 'axios'
 import { add, reduce } from '../pigeon/index.ts'
 import { imgAntiShielding } from './AntiShielding.ts'
+import { Image, SocketHandle } from 'node-open-shamrock'
 
 const logger = makeLogger({ pluginName: 'setu' })
 
@@ -17,7 +15,7 @@ export default () => {
 }
 
 function event() {
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     const { setuConfig } = global.config as { setuConfig: setuConfig }
@@ -26,7 +24,7 @@ function event() {
   })
 }
 
-async function handler(context: CQEvent<'message'>['context'], match: RegExpMatchArray) {
+async function handler(context: SocketHandle['message'], match: RegExpMatchArray) {
   const { setuConfig, proxyConfig } = global.config as {
     setuConfig: setuConfig
     proxyConfig: proxyConfig
@@ -50,19 +48,21 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
 
   // 每天上限
   if (count >= setuConfig.limit) {
-    return await replyMsg(
+    return await bot.handle_quick_operation_async({
       context,
-      CQ.image('https://api.lolicon.app/assets/img/lx.jpg').toString(),
-      {
-        reply: true
+      operation: {
+        reply: Image({ url: 'https://api.lolicon.app/assets/img/lx.jpg' })
       }
-    ).catch(
-      async () => await replyMsg(context, '因此对于年轻人而言一个重要的功课就是学会去节制欲望.jpg')
-    )
+    })
   }
 
   if (!(await reduce(user_id, setuConfig.pigeon, '看色图'))) {
-    return await replyMsg(context, '你的鸽子不够哦~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '你的鸽子不够哦~'
+      }
+    })
   }
 
   let requestData: {
@@ -99,19 +99,34 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
     logger.WARNING('请求色图接口失败~')
     logger.ERROR(error)
     await add(user_id, setuConfig.pigeon, '请求色图接口失败~')
-    return await replyMsg(context, '请求色图接口失败~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '请求色图接口失败~'
+      }
+    })
   }
 
   if (responseData === ':D') {
     await add(user_id, setuConfig.pigeon, '机器人IP被Ban啦,换个试试吧~')
-    return await replyMsg(context, '机器人IP被Ban啦,换个试试吧~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '机器人IP被Ban啦,换个试试吧~'
+      }
+    })
   }
 
   if (responseData.data.length > 0) {
     responseData = responseData.data[0]
   } else {
     await add(user_id, setuConfig.pigeon, '换个标签试试吧~')
-    return await replyMsg(context, '换个标签试试吧~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '换个标签试试吧~'
+      }
+    })
   }
 
   let fullUrl = `https://www.pixiv.net/artworks/${responseData.pid}`
@@ -126,7 +141,12 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
       logger.WARNING('短链服务器爆炸惹~')
       logger.ERROR(error)
       await add(user_id, setuConfig.pigeon, '短链服务器爆炸惹~')
-      return await replyMsg(context, '短链服务器爆炸惹~', { reply: true })
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: {
+          reply: '短链服务器爆炸惹~'
+        }
+      })
     }
   }
 
@@ -137,7 +157,14 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
     `作品地址: ${setuConfig.short.enable ? shortUrlData.url : confuseURL(fullUrl)}`
   ].join('\n')
 
-  const infoMessageResponse = await replyMsg(context, infoMessage, { reply: true })
+  await bot.handle_quick_operation_async({
+    context,
+    operation: {
+      reply: infoMessage,
+      delete: true,
+      delay: setuConfig.withdraw * 1000 + 3 * 1000
+    }
+  })
 
   let image
 
@@ -151,10 +178,20 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
     logger.ERROR(error)
     if (error instanceof AxiosError && error.response && error.response.status === 404) {
       await add(user_id, setuConfig.pigeon, '这张色图被删了,真可惜~')
-      return await replyMsg(context, '这张色图被删了,真可惜~', { reply: true })
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: {
+          reply: '这张色图被删了,真可惜~'
+        }
+      })
     } else {
       await add(user_id, setuConfig.pigeon, '请求P站图片失败~')
-      return await replyMsg(context, '请求P站图片失败~', { reply: true })
+      return await bot.handle_quick_operation_async({
+        context,
+        operation: {
+          reply: '请求P站图片失败~'
+        }
+      })
     }
   }
 
@@ -163,7 +200,12 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
 
   if (!resTxt || resTxt.includes('404')) {
     await add(user_id, setuConfig.pigeon, '这张色图被删了,真可惜~')
-    return await replyMsg(context, '这张色图被删了,真可惜~', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '这张色图被删了,真可惜~'
+      }
+    })
   }
 
   let base64
@@ -175,11 +217,25 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
     logger.WARNING('反和谐失败')
     logger.ERROR(error)
     await add(user_id, setuConfig.pigeon, '反和谐失败')
-    return await replyMsg(context, '反和谐失败惹', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '反和谐失败惹'
+      }
+    })
   }
 
   try {
-    const message = await replyMsg(context, CQ.image(`base64://${base64}`).toString())
+    await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: Image({
+          file: `base64://${base64}`
+        }),
+        delete: true,
+        delay: setuConfig.withdraw * 1000
+      }
+    })
 
     count++
     //更新数据
@@ -190,14 +246,13 @@ async function handler(context: CQEvent<'message'>['context'], match: RegExpMatc
       })
       .where('user_id', user_id)
       .into('setu')
-
-    setTimeout(async () => {
-      //撤回消息
-      await bot.delete_msg(message.message_id)
-      await bot.delete_msg(infoMessageResponse.message_id)
-    }, setuConfig.withdraw * 1000)
   } catch (error) {
     await add(user_id, setuConfig.pigeon, '色图发送失败')
-    return await replyMsg(context, '色图发送失败', { reply: true })
+    return await bot.handle_quick_operation_async({
+      context,
+      operation: {
+        reply: '色图发送失败'
+      }
+    })
   }
 }

@@ -1,13 +1,12 @@
-import type { commandFormat } from '@/libs/eventReg.ts'
+import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
+import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { getDir } from '@/libs/getDirName.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
-import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
-import type { CQEvent } from 'go-cqwebsocket'
 import fs from 'fs'
 import { jsonc } from 'jsonc'
 import path from 'path'
+import { SocketHandle } from 'node-open-shamrock'
 
 const logger = makeLogger({ pluginName: 'block' })
 
@@ -16,11 +15,11 @@ export default () => {
 }
 
 function event() {
-  eventReg('message', async ({ context }, command) => await checkBan(context, command), 102)
-  eventReg('notice', async ({ context }) => await checkBan(context), 102)
-  eventReg('request', async ({ context }) => await checkBan(context), 102)
+  eventReg('message', async (context, command) => await checkBan(context, command), 102)
+  eventReg('notice', async context => await checkBan(context), 102)
+  eventReg('request', async context => await checkBan(context), 102)
 
-  eventReg('message', async ({ context }, command) => {
+  eventReg('message', async (context, command) => {
     if (!command) return
 
     if (command.name === '拉黑') {
@@ -32,10 +31,7 @@ function event() {
 }
 
 async function checkBan(
-  context:
-    | CQEvent<'message'>['context']
-    | CQEvent<'notice'>['context']
-    | CQEvent<'request'>['context'],
+  context: SocketHandle['message'] | SocketHandle['notice'] | SocketHandle['request'],
   command?: commandFormat | false
 ) {
   const { blockConfig } = global.config as { blockConfig: blockConfig }
@@ -109,13 +105,17 @@ async function checkBan(
 }
 
 async function check(
-  context: CQEvent<'message'>['context'],
+  context: SocketHandle['message'],
   command: commandFormat,
   element: blockRule,
   defaultReply: string
 ) {
   if (command.name.match(element.regexp)) {
-    if (element.reply !== '') await replyMsg(context, element.reply ?? defaultReply)
+    if (element.reply !== '')
+      await bot.handle_quick_operation_async({
+        context,
+        operation: { reply: element.reply ?? defaultReply }
+      })
     if (debug) {
       if ('group_id' in context) {
         logger.DEBUG(`群组 ${context.group_id} 的命令 ${element.regexp} 处于黑名单中`)
@@ -127,12 +127,12 @@ async function check(
   }
 }
 
-async function checkRole(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function checkRole(context: SocketHandle['message'], command: commandFormat) {
   const { botConfig } = global.config as { botConfig: botConfig }
 
   const { user_id } = context
   if (user_id !== botConfig.admin) {
-    await replyMsg(context, '你不是管理员 : }')
+    await bot.handle_quick_operation_async({ context, operation: { reply: '你不是管理员 : }' } })
     return false
   }
 
@@ -141,7 +141,7 @@ async function checkRole(context: CQEvent<'message'>['context'], command: comman
   return true
 }
 
-async function ban(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function ban(context: SocketHandle['message'], command: commandFormat) {
   let { blockConfig } = global.config as { blockConfig: blockConfig }
 
   if (!(await checkRole(context, command))) return
@@ -151,21 +151,23 @@ async function ban(context: CQEvent<'message'>['context'], command: commandForma
   const id = params[1]
 
   if (type === '人') {
-    if (blockConfig.blockUsers.includes(parseInt(id))) return await replyMsg(context, '已存在')
+    if (blockConfig.blockUsers.includes(parseInt(id)))
+      return await bot.handle_quick_operation_async({ context, operation: { reply: '已存在' } })
     blockConfig.blockUsers.push(parseInt(id))
   } else if (type === '群') {
-    if (blockConfig.blockGroups.includes(parseInt(id))) return await replyMsg(context, '已存在')
+    if (blockConfig.blockGroups.includes(parseInt(id)))
+      return await bot.handle_quick_operation_async({ context, operation: { reply: '已存在' } })
     blockConfig.blockGroups.push(parseInt(id))
   } else {
-    return await replyMsg(context, '未知类型')
+    return await bot.handle_quick_operation_async({ context, operation: { reply: '未知类型' } })
   }
 
-  await replyMsg(context, '已添加')
+  await await bot.handle_quick_operation_async({ context, operation: { reply: '已添加' } })
   // 回写
   writeConfig(blockConfig)
 }
 
-async function unban(context: CQEvent<'message'>['context'], command: commandFormat) {
+async function unban(context: SocketHandle['message'], command: commandFormat) {
   let { blockConfig } = global.config as { blockConfig: blockConfig }
 
   if (!(await checkRole(context, command))) return
@@ -177,14 +179,16 @@ async function unban(context: CQEvent<'message'>['context'], command: commandFor
 
   if (type === '人') {
     const index = blockConfig.blockUsers.findIndex(v => v === parseInt(id))
-    if (index === -1) return await replyMsg(context, '不存在')
+    if (index === -1)
+      return await bot.handle_quick_operation_async({ context, operation: { reply: '不存在' } })
     blockConfig.blockUsers.splice(index, 1)
   } else if (type === '群') {
     const index = blockConfig.blockGroups.findIndex(v => v === parseInt(id))
-    if (index === -1) return await replyMsg(context, '不存在')
+    if (index === -1)
+      return await bot.handle_quick_operation_async({ context, operation: { reply: '不存在' } })
     blockConfig.blockGroups.splice(index, 1)
   } else {
-    return await replyMsg(context, '未知类型')
+    return await bot.handle_quick_operation_async({ context, operation: { reply: '未知类型' } })
   }
 
   writeConfig(blockConfig)

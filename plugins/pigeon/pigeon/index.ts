@@ -1,11 +1,10 @@
 import { eventReg, haveAt } from '@/libs/eventReg.ts'
-import { replyMsg } from '@/libs/sendMsg.ts'
 
 export default function event() {
   //判断用户是否注册过了
   eventReg(
     'message',
-    async ({ context }, command) => {
+    async (context, command) => {
       const { user_id } = context
 
       const at = haveAt(context)
@@ -14,8 +13,11 @@ export default function event() {
       const isAt = at && notHaveAccount
 
       if (isCommand || isAt) {
-        await replyMsg(context, `请先使用"${global.config.botConfig.prefix}咕咕"注册账户`, {
-          reply: true
+        await bot.handle_quick_operation_async({
+          context,
+          operation: {
+            reply: `请先使用"${global.config.botConfig.prefix}咕咕"注册账户`
+          }
         })
         return 'quit'
       }
