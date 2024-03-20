@@ -7,6 +7,7 @@ import fs from 'fs'
 import { jsonc } from 'jsonc'
 import path from 'path'
 import { SocketHandle } from 'node-open-shamrock'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 const logger = makeLogger({ pluginName: 'block' })
 
@@ -112,7 +113,7 @@ async function check(
 ) {
   if (command.name.match(element.regexp)) {
     if (element.reply !== '')
-      await bot.handle_quick_operation_async({
+      await quickOperation({
         context,
         operation: { reply: element.reply ?? defaultReply }
       })
@@ -132,7 +133,7 @@ async function checkRole(context: SocketHandle['message'], command: commandForma
 
   const { user_id } = context
   if (user_id !== botConfig.admin) {
-    await bot.handle_quick_operation_async({ context, operation: { reply: '你不是管理员 : }' } })
+    await quickOperation({ context, operation: { reply: '你不是管理员 : }' } })
     return false
   }
 
@@ -152,17 +153,17 @@ async function ban(context: SocketHandle['message'], command: commandFormat) {
 
   if (type === '人') {
     if (blockConfig.blockUsers.includes(parseInt(id)))
-      return await bot.handle_quick_operation_async({ context, operation: { reply: '已存在' } })
+      return await quickOperation({ context, operation: { reply: '已存在' } })
     blockConfig.blockUsers.push(parseInt(id))
   } else if (type === '群') {
     if (blockConfig.blockGroups.includes(parseInt(id)))
-      return await bot.handle_quick_operation_async({ context, operation: { reply: '已存在' } })
+      return await quickOperation({ context, operation: { reply: '已存在' } })
     blockConfig.blockGroups.push(parseInt(id))
   } else {
-    return await bot.handle_quick_operation_async({ context, operation: { reply: '未知类型' } })
+    return await quickOperation({ context, operation: { reply: '未知类型' } })
   }
 
-  await await bot.handle_quick_operation_async({ context, operation: { reply: '已添加' } })
+  await await quickOperation({ context, operation: { reply: '已添加' } })
   // 回写
   writeConfig(blockConfig)
 }
@@ -179,16 +180,14 @@ async function unban(context: SocketHandle['message'], command: commandFormat) {
 
   if (type === '人') {
     const index = blockConfig.blockUsers.findIndex(v => v === parseInt(id))
-    if (index === -1)
-      return await bot.handle_quick_operation_async({ context, operation: { reply: '不存在' } })
+    if (index === -1) return await quickOperation({ context, operation: { reply: '不存在' } })
     blockConfig.blockUsers.splice(index, 1)
   } else if (type === '群') {
     const index = blockConfig.blockGroups.findIndex(v => v === parseInt(id))
-    if (index === -1)
-      return await bot.handle_quick_operation_async({ context, operation: { reply: '不存在' } })
+    if (index === -1) return await quickOperation({ context, operation: { reply: '不存在' } })
     blockConfig.blockGroups.splice(index, 1)
   } else {
-    return await bot.handle_quick_operation_async({ context, operation: { reply: '未知类型' } })
+    return await quickOperation({ context, operation: { reply: '未知类型' } })
   }
 
   writeConfig(blockConfig)

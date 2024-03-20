@@ -1,5 +1,6 @@
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg } from '@/libs/eventReg.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import fs from 'fs'
 import { jsonc } from 'jsonc'
@@ -50,12 +51,12 @@ async function help(context: SocketHandle['message'], command: commandFormat) {
   if (name) {
     const command = helpData.commandList.find(item => item.commandName === name)
     if (!command)
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: { reply: '没有这个命令哦~' }
       })
 
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: [
@@ -75,7 +76,7 @@ async function help(context: SocketHandle['message'], command: commandFormat) {
       }
     })
 
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply:

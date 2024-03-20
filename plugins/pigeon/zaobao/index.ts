@@ -2,6 +2,7 @@ import { retryGet } from '@/libs/axios.ts'
 import { commandFormat, eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
 import { retryAsync } from '@/libs/retry.ts'
+import { quickOperation, sendMsg } from '@/libs/sendMsg.ts'
 import { sleep } from '@/libs/sleep.ts'
 import { getDate } from '@/libs/time.ts'
 import { CronJob } from 'cron'
@@ -73,23 +74,15 @@ async function init() {
         for (let i = 0; i < groups[crontab].length; i++) {
           const { group_id, type } = groups[crontab][i]
 
-          let message = ''
-          if (temp[type]) {
-            message = temp[type]
-          } else {
-            message = await prepareMessage(true, type)
-            temp[type] = message
-          }
+          if (!temp[type]) temp[type] = await prepareMessage(true, type)
 
-          await bot
-            .send_group_message({
-              group_id: groups[crontab][i].group_id,
-              message
-            })
-            .catch(err => {
-              logger.ERROR(err)
-              logger.WARNING('早报发送失败', { group_id })
-            })
+          await sendMsg(
+            { message_type: 'group', group_id: groups[crontab][i].group_id },
+            temp[type]
+          ).catch(err => {
+            logger.ERROR(err)
+            logger.WARNING('早报发送失败', { group_id })
+          })
           await sleep(zaobaoConfig.cd * 1000)
         }
       },
@@ -104,7 +97,7 @@ async function zaobao(context: SocketHandle['message'], command: commandFormat) 
   if (command.params && command.params.length > 0 && urls.get(command.params[0]))
     type = command.params[0] as zaobaoConfig['type']
 
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: await prepareMessage(false, type)

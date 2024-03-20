@@ -1,5 +1,6 @@
 import { eventReg } from '@/libs/eventReg.ts'
 import { randomFloat, randomInt } from '@/libs/random.ts'
+import { sendMsg } from '@/libs/sendMsg.ts'
 import { SocketHandle } from 'node-open-shamrock'
 
 export default () => {
@@ -53,8 +54,8 @@ async function poke(context: SocketHandle['notice.notify.poke.group']) {
       user_id: bot.eventBus.status.self.user_id
     })
 
-    if (self.data.role !== 'admin' && self.data.role !== 'owner') return false
-    if (self.data.role === 'admin' && user.data.role !== 'member') return false
+    if (self.role !== 'admin' && self.role !== 'owner') return false
+    if (self.role === 'admin' && user.role !== 'member') return false
 
     const muteTime = randomInt(pokeConfig.banTime[0], pokeConfig.banTime[1])
 
@@ -67,16 +68,16 @@ async function poke(context: SocketHandle['notice.notify.poke.group']) {
     replyed = true
 
     //禁言成功
-    return await bot.send_group_message({
-      group_id,
-      message: pokeConfig.banReply[randomInt(0, pokeConfig.banReply.length - 1)]
-    })
+    return await sendMsg(
+      { message_type: 'group', group_id },
+      pokeConfig.banReply[randomInt(0, pokeConfig.banReply.length - 1)]
+    )
   }
 
   //回复
   if (!replyed)
-    await bot.send_group_message({
-      group_id,
-      message: pokeConfig.reply[randomInt(0, pokeConfig.reply.length - 1)]
-    })
+    await sendMsg(
+      { message_type: 'group', group_id },
+      pokeConfig.reply[randomInt(0, pokeConfig.reply.length - 1)]
+    )
 }

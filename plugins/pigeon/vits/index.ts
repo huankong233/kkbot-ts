@@ -4,6 +4,7 @@ import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
 import { add, reduce } from '../pigeon/index.ts'
 import { Record, SocketHandle } from 'node-open-shamrock'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 const logger = makeLogger({ pluginName: 'vits' })
 
@@ -45,7 +46,7 @@ async function Vits(context: SocketHandle['message'], command: commandFormat) {
   if (!vitsData.speakers) await getList()
 
   if (!vitsData.speakers.get(id)) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `此id不存在,可前往 ${vitsConfig.helpUrl} 查看有哪些id`
@@ -55,7 +56,7 @@ async function Vits(context: SocketHandle['message'], command: commandFormat) {
 
   const text = params[1]
   if (!text) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '你还没告诉我要说什么呢'
@@ -64,7 +65,7 @@ async function Vits(context: SocketHandle['message'], command: commandFormat) {
   }
 
   if (!(await reduce(user_id, vitsConfig.cost, `Vits生成`))) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `生成失败,鸽子不足~`
@@ -79,7 +80,7 @@ async function Vits(context: SocketHandle['message'], command: commandFormat) {
       responseType: 'arraybuffer'
     }).then(res => res.data)
   } catch (error) {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: '获取语音文件失败'
@@ -95,7 +96,7 @@ async function Vits(context: SocketHandle['message'], command: commandFormat) {
   const resTxt = decoder.decode(response)
 
   if (resTxt.includes('500') || resTxt.includes('404')) {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: '模型未适配，请使用其他模型'
@@ -106,7 +107,7 @@ async function Vits(context: SocketHandle['message'], command: commandFormat) {
   }
 
   const base64 = Buffer.from(response).toString('base64')
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: Record({

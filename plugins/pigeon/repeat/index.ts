@@ -1,5 +1,6 @@
 import { eventReg } from '@/libs/eventReg.ts'
 import { randomFloat } from '@/libs/random.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { SocketHandle } from 'node-open-shamrock'
 
 export default async () => {
@@ -22,14 +23,18 @@ function event() {
 
 async function repeat(context: SocketHandle['message']) {
   if (context.message_type === 'private') return
-  const { group_id, user_id, message } = context
+  const { group_id, user_id, message } = context as {
+    group_id: number
+    user_id: number
+    message: string
+  }
   const { repeatConfig } = global.config as { repeatConfig: repeatConfig }
   const { repeatData } = global.data as { repeatData: repeatData }
   const { repeat } = repeatData
 
   if (!repeat[group_id]) {
     repeat[group_id] = {
-      message: message.toString(),
+      message: message,
       user_id: [user_id],
       count: 1
     }
@@ -37,7 +42,7 @@ async function repeat(context: SocketHandle['message']) {
     if (message !== repeat[group_id].message) {
       //替换
       repeat[group_id] = {
-        message: message.toString(),
+        message: message,
         user_id: [user_id],
         count: 1
       }
@@ -48,10 +53,11 @@ async function repeat(context: SocketHandle['message']) {
         repeat[group_id].count++
         //判断次数
         if (repeat[group_id].count === repeatConfig.times) {
-          await bot.handle_quick_operation_async({
+          await quickOperation({
             context,
             operation: {
-              reply: message
+              reply: message,
+              auto_reply: false
             }
           })
         }
@@ -61,10 +67,11 @@ async function repeat(context: SocketHandle['message']) {
 
   //所有规则外还有一定概率触发
   if (randomFloat(0, 100) <= repeatConfig.commonProb) {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
-        reply: message as string
+        reply: message,
+        auto_reply: false
       }
     })
   }

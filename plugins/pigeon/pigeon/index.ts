@@ -1,4 +1,5 @@
 import { eventReg, haveAt } from '@/libs/eventReg.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 export default function event() {
   //判断用户是否注册过了
@@ -13,7 +14,7 @@ export default function event() {
       const isAt = at && notHaveAccount
 
       if (isCommand || isAt) {
-        await bot.handle_quick_operation_async({
+        await quickOperation({
           context,
           operation: {
             reply: `请先使用"${global.config.botConfig.prefix}咕咕"注册账户`

@@ -2,6 +2,7 @@ import { retryPost } from '@/libs/axios.ts'
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { SocketHandle } from 'node-open-shamrock'
 
 const logger = makeLogger({ pluginName: 'nbnhhsh' })
@@ -29,7 +30,7 @@ async function nbnhhsh(context: SocketHandle['message'], command: commandFormat)
       .then(res => res.data)
       .then(async res => {
         if (!res || res.length <= 0)
-          return await bot.handle_quick_operation_async({
+          return await quickOperation({
             context,
             operation: {
               reply: '空空也不知道这是什么意思呢~'
@@ -39,14 +40,14 @@ async function nbnhhsh(context: SocketHandle['message'], command: commandFormat)
       })
       .then(async res => {
         if (!res?.trans) {
-          return await bot.handle_quick_operation_async({
+          return await quickOperation({
             context,
             operation: {
               reply: '空空也不知道这是什么意思呢~'
             }
           })
         }
-        await bot.handle_quick_operation_async({
+        await quickOperation({
           context,
           operation: {
             reply: [`"${data.name}" 可能是:`, `${data.trans.join(', ')}`].join('\n')
@@ -56,7 +57,7 @@ async function nbnhhsh(context: SocketHandle['message'], command: commandFormat)
   } catch (error) {
     logger.WARNING(`请求接口失败`)
     logger.ERROR(error)
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `接口请求失败`

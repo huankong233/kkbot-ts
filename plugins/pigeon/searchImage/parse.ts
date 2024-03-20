@@ -4,9 +4,9 @@ import { formatTime } from '@/libs/time.ts'
 import { Image, Text, SendMessageArray } from 'node-open-shamrock'
 
 class CParser {
-  [key: string]: (item: any) => Promise<SendMessageArray> | SendMessageArray
+  [key: string]: (item: any) => Promise<SendMessageArray>
 
-  ascii2d = function (item: any) {
+  ascii2d = async function (item: any) {
     let message = [`图片信息:${item.info}`, `链接:${confuseURL(item.source.link, true)}`]
 
     if (item.author && (item.author.text || item.author.link)) {
@@ -69,7 +69,7 @@ class CParser {
     ]
   }
 
-  AnimeTraceAnime = function (item: any) {
+  AnimeTraceAnime = async function (item: any) {
     const { searchImageConfig } = global.config
 
     const preview =

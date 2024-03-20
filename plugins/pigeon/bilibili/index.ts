@@ -15,6 +15,7 @@ import {
   convertCQCodeToJSON
 } from 'node-open-shamrock'
 import { jsonc } from 'jsonc'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 export const logger = makeLogger({ pluginName: 'bilibili' })
 
@@ -75,7 +76,7 @@ async function bilibiliHandler(context: SocketHandle['message']) {
   const { avid, bvid, dyid, arid, lrid } = param
 
   if (bilibiliConfig.despise && isMiniProgram && (avid || bvid || dyid || arid || lrid)) {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: { reply: Image({ url: 'https://i.loli.net/2020/04/27/HegAkGhcr6lbPXv.png' }) }
     })
@@ -103,7 +104,7 @@ async function reply(
   message: SendMessageArray | SendMessageObject,
   isMiniProgram: boolean
 ) {
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: { reply: message }
   })

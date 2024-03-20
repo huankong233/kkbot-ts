@@ -7,6 +7,7 @@ import { AxiosError } from 'axios'
 import { add, reduce } from '../pigeon/index.ts'
 import { imgAntiShielding } from './AntiShielding.ts'
 import { Image, SocketHandle } from 'node-open-shamrock'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 const logger = makeLogger({ pluginName: 'setu' })
 
@@ -48,7 +49,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
 
   // 每天上限
   if (count >= setuConfig.limit) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: Image({ url: 'https://api.lolicon.app/assets/img/lx.jpg' })
@@ -57,7 +58,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
   }
 
   if (!(await reduce(user_id, setuConfig.pigeon, '看色图'))) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '你的鸽子不够哦~'
@@ -99,7 +100,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
     logger.WARNING('请求色图接口失败~')
     logger.ERROR(error)
     await add(user_id, setuConfig.pigeon, '请求色图接口失败~')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '请求色图接口失败~'
@@ -109,7 +110,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
 
   if (responseData === ':D') {
     await add(user_id, setuConfig.pigeon, '机器人IP被Ban啦,换个试试吧~')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '机器人IP被Ban啦,换个试试吧~'
@@ -121,7 +122,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
     responseData = responseData.data[0]
   } else {
     await add(user_id, setuConfig.pigeon, '换个标签试试吧~')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '换个标签试试吧~'
@@ -141,7 +142,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
       logger.WARNING('短链服务器爆炸惹~')
       logger.ERROR(error)
       await add(user_id, setuConfig.pigeon, '短链服务器爆炸惹~')
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: {
           reply: '短链服务器爆炸惹~'
@@ -157,7 +158,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
     `作品地址: ${setuConfig.short.enable ? shortUrlData.url : confuseURL(fullUrl)}`
   ].join('\n')
 
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: infoMessage,
@@ -178,7 +179,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
     logger.ERROR(error)
     if (error instanceof AxiosError && error.response && error.response.status === 404) {
       await add(user_id, setuConfig.pigeon, '这张色图被删了,真可惜~')
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: {
           reply: '这张色图被删了,真可惜~'
@@ -186,7 +187,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
       })
     } else {
       await add(user_id, setuConfig.pigeon, '请求P站图片失败~')
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: {
           reply: '请求P站图片失败~'
@@ -200,7 +201,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
 
   if (!resTxt || resTxt.includes('404')) {
     await add(user_id, setuConfig.pigeon, '这张色图被删了,真可惜~')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '这张色图被删了,真可惜~'
@@ -217,7 +218,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
     logger.WARNING('反和谐失败')
     logger.ERROR(error)
     await add(user_id, setuConfig.pigeon, '反和谐失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '反和谐失败惹'
@@ -226,7 +227,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
   }
 
   try {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: Image({
@@ -248,7 +249,7 @@ async function handler(context: SocketHandle['message'], match: RegExpMatchArray
       .into('setu')
   } catch (error) {
     await add(user_id, setuConfig.pigeon, '色图发送失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '色图发送失败'

@@ -23,7 +23,6 @@
     "reconnection": true,
     //自动重连延迟和次数
     "reconnectionAttempts": 10,
-    "reconnectionDelay": 5000,
-    "receive": "CQCode"
+    "reconnectionDelay": 5000
   }
 }

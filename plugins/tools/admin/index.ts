@@ -3,6 +3,7 @@ import { getUserName } from '@/libs/Api.ts'
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { SocketHandle } from 'node-open-shamrock'
+import { quickOperation, sendMsg } from '@/libs/sendMsg.ts'
 
 export default async () => {
   event()
@@ -37,16 +38,18 @@ async function notice(context: SocketHandle['notice']) {
   const { notice_type } = context
 
   if (notice_type === 'group_increase' || notice_type === 'group_decrease') {
-    const { user_id, group_id, sub_type } = context
+    const { user_id, group_id } = context
 
-    await bot.send_group_message({
-      group_id,
-      message:
-        sub_type === 'approve'
-          ? `${await getUserName(user_id)} 欢迎加群呀~ ヾ(≧▽≦*)o`
-          : // sub_type: leave
-            `${await getUserName(user_id)} 退群了 (*>.<*)`
-    })
+    await sendMsg(
+      {
+        message_type: 'group',
+        group_id
+      },
+      notice_type === 'group_increase'
+        ? `${await getUserName(user_id)} 欢迎加群呀~ ヾ(≧▽≦*)o`
+        : // group_decrease
+          `${await getUserName(user_id)} 退群了 (*>.<*)`
+    )
   }
 }
 
@@ -102,10 +105,7 @@ async function sendNotice(context: SocketHandle['request'], name: string, auto =
     reply.push(str)
   }
 
-  await bot.send_private_message({
-    user_id: botConfig.admin,
-    message: reply.join('\n')
-  })
+  await sendMsg({ message_type: 'private', user_id: botConfig.admin }, reply.join('\n'))
 }
 
 //同意入群/加群请求
@@ -118,7 +118,7 @@ async function invite(
   if (context.post_type === 'message') {
     // 判断是否为管理员
     if (botConfig.admin !== context.user_id)
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: { reply: '你不是咱的管理员喵~' }
       })
@@ -138,19 +138,19 @@ async function invite(
     .catch(async response => {
       response.status === 'failed'
         ? context.post_type === 'message'
-          ? await bot.handle_quick_operation_async({
+          ? await quickOperation({
               context,
               operation: { reply: [`执行失败,失败原因:`, `${response.wording}`].join('\n') }
             })
-          : await bot.send_private_message({
-              user_id: botConfig.admin,
-              message: [`执行失败,失败原因:`, `${response.wording}`].join('\n')
-            })
+          : await sendMsg(
+              { message_type: 'private', user_id: botConfig.admin },
+              [`执行失败,失败原因:`, `${response.wording}`].join('\n')
+            )
         : null
     })
     .finally(async () =>
       context.post_type === 'message'
-        ? await bot.handle_quick_operation_async({
+        ? await quickOperation({
             context,
             operation: { reply: '执行成功(不代表处理结果)' }
           })
@@ -168,7 +168,7 @@ async function friend(
   if (context.post_type === 'message') {
     // 判断是否为管理员
     if (botConfig.admin !== context.user_id)
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: {
           reply: '你不是咱的管理员喵~'
@@ -187,19 +187,19 @@ async function friend(
     .catch(async response => {
       response.status === 'failed'
         ? context.post_type === 'message'
-          ? await bot.handle_quick_operation_async({
+          ? await quickOperation({
               context,
               operation: { reply: [`执行失败,失败原因:`, `${response.wording}`].join('\n') }
             })
-          : await bot.send_private_message({
-              user_id: botConfig.admin,
-              message: [`执行失败,失败原因:`, `${response.wording}`].join('\n')
-            })
+          : await sendMsg(
+              { message_type: 'private', user_id: botConfig.admin },
+              [`执行失败,失败原因:`, `${response.wording}`].join('\n')
+            )
         : null
     })
     .finally(async () =>
       context.post_type === 'message'
-        ? await bot.handle_quick_operation_async({
+        ? await quickOperation({
             context,
             operation: { reply: '执行成功(不代表处理结果)' }
           })

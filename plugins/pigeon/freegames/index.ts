@@ -1,6 +1,6 @@
 import { eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { sendForwardMsg } from '@/libs/sendMsg.ts'
+import { quickOperation, sendForwardMsg } from '@/libs/sendMsg.ts'
 import { sleep } from '@/libs/sleep.ts'
 import { CronJob } from 'cron'
 import { epicApi, steamApi } from './lib.ts'
@@ -40,15 +40,16 @@ async function init() {
       for (let i = 0; i < freegamesConfig.groups.length; i++) {
         const group_id = freegamesConfig.groups[i]
 
-        await bot
-          .send_group_forward_message({
-            group_id,
-            messages
-          })
-          .catch(err => {
-            logger.ERROR(err)
-            logger.WARNING('发送每日免费游戏失败', { group_id })
-          })
+        await sendForwardMsg(
+          {
+            message_type: 'group',
+            group_id
+          },
+          messages
+        ).catch(err => {
+          logger.ERROR(err)
+          logger.WARNING('发送每日免费游戏失败', { group_id })
+        })
         await sleep(freegamesConfig.cd * 1000)
       }
     },
@@ -64,7 +65,7 @@ async function freegames(context: SocketHandle['message']) {
   } catch (error) {
     logger.WARNING(`请求接口失败`)
     logger.ERROR(error)
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `接口请求失败`
@@ -73,7 +74,7 @@ async function freegames(context: SocketHandle['message']) {
   }
 
   await sendForwardMsg(context, messages).catch(async () => {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: '发送合并消息失败，可以尝试私聊我哦~'

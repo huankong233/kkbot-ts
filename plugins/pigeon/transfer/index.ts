@@ -1,5 +1,6 @@
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { add, getUserData, reduce } from '@/plugins/pigeon/pigeon/index.ts'
 import { SocketHandle } from 'node-open-shamrock'
 
@@ -25,7 +26,7 @@ async function transferAccounts(context: SocketHandle['message'], command: comma
   const to = parseInt(params[0].replace(/[^0-9]/gi, ''))
 
   if (from === to)
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '不可以给自己转账哦~'
@@ -36,7 +37,7 @@ async function transferAccounts(context: SocketHandle['message'], command: comma
   const num = parseFloat(params[1].replace(/[^0-9]/gi, ''))
 
   if (num <= 0) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '转账失败,金额有误'
@@ -47,7 +48,7 @@ async function transferAccounts(context: SocketHandle['message'], command: comma
   const to_data = await getUserData(to)
 
   if (!to_data)
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '转账失败,转账对象不存在~'
@@ -55,7 +56,7 @@ async function transferAccounts(context: SocketHandle['message'], command: comma
     })
 
   if (!(await reduce(from, num, `转账给${to}`))) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '转账失败,账户鸽子不足~'
@@ -64,7 +65,7 @@ async function transferAccounts(context: SocketHandle['message'], command: comma
   }
 
   await add(to, num, `转账来自${from}`)
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: '转账成功~'

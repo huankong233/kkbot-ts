@@ -2,8 +2,8 @@ import type { botConfig, botData } from './config.d.ts'
 import { format } from '@/libs/eventReg.ts'
 import { globalReg } from '@/libs/globalReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
+import { sendMsg } from '@/libs/sendMsg.ts'
 import { SRWebsocket } from 'node-open-shamrock'
-import * as emoji from 'node-emoji'
 
 const logger = makeLogger({ pluginName: 'bot', subModule: 'connect' })
 const eventLogger = logger.changeSubModule('events')
@@ -16,7 +16,7 @@ export default async function () {
     const { botConfig } = global.config as { botConfig: botConfig }
     const { botData } = global.data as { botData: botData }
 
-    const bot = new SRWebsocket(botConfig.connect)
+    const bot = new SRWebsocket({ ...botConfig.connect, receive: 'CQCode' })
 
     let attempts = 1
 
@@ -95,7 +95,7 @@ function initEvents() {
 
     if (debug) eventLogger.DEBUG(`收到信息:\n`, context)
 
-    context.message = emoji.unemojify(context.message.toString().trim())
+    context.message = context.message.toString().trim()
 
     for (let i = 0; i < events.length; i++) {
       try {
@@ -160,5 +160,5 @@ export async function connectSuccess() {
   const { botConfig } = global.config as { botConfig: botConfig }
   if (dev || !botConfig.online.enable) return
   if (botConfig.admin <= 0) return logger.NOTICE('未设置管理员账户,请检查!')
-  await bot.send_private_message({ user_id: botConfig.admin, message: `${botConfig.online.msg}` })
+  await sendMsg({ message_type: 'private', user_id: botConfig.admin }, botConfig.online.msg)
 }

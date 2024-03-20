@@ -1,6 +1,7 @@
 import { getUserName } from '@/libs/Api.ts'
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg } from '@/libs/eventReg.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { getUserData } from '@/plugins/pigeon/pigeon/index.ts'
 import { SocketHandle } from 'node-open-shamrock'
 
@@ -36,14 +37,14 @@ async function query(context: SocketHandle['message'], command?: commandFormat) 
   const username = await getUserName(user_id)
 
   if (!userData)
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `${username}是谁呀,咱不认识呢~`
       }
     })
 
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: `用户${username}拥有${userData.pigeon_num}只鸽子`
@@ -59,7 +60,7 @@ async function rankingList(context: SocketHandle['message']) {
     .orderBy([{ column: 'pigeon_num', order: 'DESC' }])
 
   if (data.length === 0) {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: '还没有用户哦~'
@@ -75,7 +76,7 @@ async function rankingList(context: SocketHandle['message']) {
       })
     )
 
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: board.join('\n')

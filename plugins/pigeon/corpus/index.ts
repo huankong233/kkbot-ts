@@ -1,5 +1,6 @@
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
 import { SocketHandle, convertCQCodeToJSON } from 'node-open-shamrock'
@@ -52,7 +53,7 @@ async function corpus(context: SocketHandle['message']) {
     const exec = regexp.exec(message.toString())
     if (!exec) continue
 
-    await bot.handle_quick_operation_async({ context, operation: { reply, auto_reply: false } })
+    await quickOperation({ context, operation: { reply, auto_reply: false } })
   }
 }
 
@@ -99,7 +100,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
   if (await missingParams(context, command, 4)) return
 
   if (!(await reduce(user_id, corpusConfig.add, '添加关键字'))) {
-    return await bot.handle_quick_operation_async({ context, operation: { reply: '鸽子不足~' } })
+    return await quickOperation({ context, operation: { reply: '鸽子不足~' } })
   }
 
   const messages = convertCQCodeToJSON(params[0])
@@ -116,7 +117,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
         : ([keyword, mode] = [message.data.text, parseInt(params[2])])
     } else {
       await add(user_id, corpusConfig.add, '添加关键词失败')
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: { reply: '不能同时存在图片或文字哦~' }
       })
@@ -129,7 +130,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
   //判断参数是否合法
   if (!available.mode.includes(mode)) {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `模式不合法,请发送"${botConfig.prefix}帮助 ${botConfig.botName}学习"查看细节`
@@ -139,7 +140,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
 
   if (!available.scene.includes(scene)) {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `生效范围不合法,请发送"${botConfig.prefix}帮助 ${botConfig.botName}学习"查看细节`
@@ -152,7 +153,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
 
   if (repeat.length !== 0) {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: `这个"关键词"已经存在啦~`
@@ -162,7 +163,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
 
   if (await database.insert({ user_id, keyword, mode, reply, scene }).into('corpus')) {
     await loadRules()
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: `${botConfig.botName}学会啦~`
@@ -170,7 +171,7 @@ async function learn(context: SocketHandle['message'], command: commandFormat) {
     })
   } else {
     await add(user_id, corpusConfig.add, '添加关键词失败')
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: '学习失败~'
@@ -191,7 +192,7 @@ async function forget(context: SocketHandle['message'], command: commandFormat) 
   if (await missingParams(context, command, 1)) return
 
   if (!(await reduce(user_id, corpusConfig.delete, '删除关键词'))) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '鸽子不足~'
@@ -206,7 +207,7 @@ async function forget(context: SocketHandle['message'], command: commandFormat) 
 
   if (!data) {
     await add(user_id, corpusConfig.delete, '删除关键词失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '这个关键词不存在哦~'
@@ -217,7 +218,7 @@ async function forget(context: SocketHandle['message'], command: commandFormat) 
   //判断所有者
   if (data.user_id !== user_id && botConfig.admin !== user_id) {
     await add(user_id, corpusConfig.delete, '删除关键词失败')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '删除失败，这不是你的词条哦'
@@ -227,7 +228,7 @@ async function forget(context: SocketHandle['message'], command: commandFormat) 
 
   if (await database('corpus').where('id', data.id).update({ hide: 1 })) {
     await loadRules()
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '删除成功啦~'

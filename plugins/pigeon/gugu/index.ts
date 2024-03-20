@@ -1,5 +1,6 @@
 import { eventReg } from '@/libs/eventReg.ts'
 import { randomInt } from '@/libs/random.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { isToday } from '@/libs/time.ts'
 import { add, getUserData } from '@/plugins/pigeon/pigeon/index.ts'
 import { SocketHandle } from 'node-open-shamrock'
@@ -22,7 +23,7 @@ async function gugu(context: SocketHandle['message']) {
 
   if (!userData) {
     //插入新用户
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: `新用户!赠送${guguConfig.newUserAdd}只鸽子~`
@@ -34,7 +35,7 @@ async function gugu(context: SocketHandle['message']) {
   } else {
     //判断今天还能不能签到
     if (isToday(userData.update_time))
-      return await bot.handle_quick_operation_async({
+      return await quickOperation({
         context,
         operation: {
           reply: `咕咕失败~今天已经咕咕过了哦~`
@@ -44,7 +45,7 @@ async function gugu(context: SocketHandle['message']) {
     //获得的鸽子数
     let addon = randomInt(1, guguConfig.oldUserAdd)
     await add(user_id, addon, '每日咕咕', { update_time: Date.now() })
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: `咕咕成功~获得${addon}只鸽子~`

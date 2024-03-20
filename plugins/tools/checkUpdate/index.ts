@@ -1,6 +1,7 @@
 import { retryGet } from '@/libs/axios.ts'
 import { eventReg } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
+import { quickOperation, sendMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import { compare } from 'compare-versions'
 import { CronJob } from 'cron'
@@ -69,8 +70,8 @@ async function checkUpdate(context?: SocketHandle['message']) {
           `当前版本: ${local_version}`
         ].join('\n')
         context
-          ? await bot.handle_quick_operation_async({ context, operation: { reply: message } })
-          : await bot.send_private_message({ user_id: botConfig.admin, message })
+          ? await quickOperation({ context, operation: { reply: message } })
+          : await sendMsg({ message_type: 'private', user_id: botConfig.admin }, message)
       }
     } else {
       //需要更新，通知admin
@@ -80,8 +81,8 @@ async function checkUpdate(context?: SocketHandle['message']) {
         `当前版本: ${local_version}`
       ].join('\n')
       context
-        ? await bot.handle_quick_operation_async({ context, operation: { reply: message } })
-        : await bot.send_private_message({ user_id: botConfig.admin, message })
+        ? await quickOperation({ context, operation: { reply: message } })
+        : await sendMsg({ message_type: 'private', user_id: botConfig.admin }, message)
     }
   }
 }

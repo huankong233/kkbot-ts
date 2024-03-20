@@ -2,6 +2,7 @@ import { getUserName } from '@/libs/Api.ts'
 import { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { getRangeCode, randomInt } from '@/libs/random.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
 import { jsonc } from 'jsonc'
 import { SocketHandle } from 'node-open-shamrock'
@@ -44,7 +45,7 @@ async function give(context: SocketHandle['message'], command: commandFormat) {
   const code = params[2] ?? getRangeCode()
 
   if (redPacket_num <= 0 || pigeon_num <= 0) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '红包发送失败,红包数量和鸽子数都不能<=0'
@@ -54,7 +55,7 @@ async function give(context: SocketHandle['message'], command: commandFormat) {
 
   const item = await database.select('*').where({ code }).from('red_packet').first()
   if (item)
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '红包发送失败,该口令已存在'
@@ -65,7 +66,7 @@ async function give(context: SocketHandle['message'], command: commandFormat) {
   const pre = pigeon_num / redPacket_num
 
   if (pre < 1) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '红包发送失败,每个包需要至少一只鸽子'
@@ -74,7 +75,7 @@ async function give(context: SocketHandle['message'], command: commandFormat) {
   }
 
   if (Math.floor(pre) !== pre) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '红包发送失败,每个包里的鸽子数需要为整数'
@@ -83,7 +84,7 @@ async function give(context: SocketHandle['message'], command: commandFormat) {
   }
 
   if (!(await reduce(user_id, pigeon_num, `发送鸽子红包_${code}`))) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '红包发送失败,账户鸽子不足'
@@ -104,7 +105,7 @@ async function give(context: SocketHandle['message'], command: commandFormat) {
 
   //更新红包列表
   await freshRedPacketList()
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: `富哥发红包了!口令:${code}`
@@ -127,7 +128,7 @@ async function get(context: SocketHandle['message']) {
     //领取过
     const pickedUserJSON = jsonc.parse(picked_user)
     if (pickedUserJSON.indexOf(user_id) !== -1) {
-      await bot.handle_quick_operation_async({
+      await quickOperation({
         context,
         operation: {
           reply: '红包领取过了哦,不要贪心啦~'
@@ -153,7 +154,7 @@ async function get(context: SocketHandle['message']) {
       .where('id', item.id)
       .from('red_packet')
 
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: `红包${item.code}领取成功,获得${getPigeonNum}只鸽子~`
@@ -169,7 +170,7 @@ async function getAll(context: SocketHandle['message']) {
   const { redPacketData } = global.data as { redPacketData: redPacketData }
   const { redPackets } = redPacketData
   if (redPackets.length === 0) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '暂时还没有红包哦~要不你发一个?'
@@ -194,7 +195,7 @@ async function getAll(context: SocketHandle['message']) {
     )
   }
 
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: msg.join('\n')

@@ -2,6 +2,7 @@ import { eventReg } from '@/libs/eventReg.ts'
 import { getDir } from '@/libs/getDirName.ts'
 // import { makeLogger } from '@/libs/logger.ts'
 import { randomInt } from '@/libs/random.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import fs from 'fs'
 import { Record, SocketHandle } from 'node-open-shamrock'
 import path from 'path'
@@ -41,7 +42,7 @@ async function dinggong(context: SocketHandle['message']) {
   const { dinggongData } = global.data as { dinggongData: dinggongData }
   const { records } = dinggongData
   const recordName = records[randomInt(records.length - 1, 0)]
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: path.basename(recordName, '.mp3')
@@ -49,7 +50,7 @@ async function dinggong(context: SocketHandle['message']) {
   })
 
   //语音回复
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: Record({

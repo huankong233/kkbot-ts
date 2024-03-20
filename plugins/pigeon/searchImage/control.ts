@@ -1,6 +1,7 @@
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import type { searchImageConfig, searchImageData } from './config.d.ts'
 import { SocketHandle } from 'node-open-shamrock'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 export const searchInitialization = () => {
   const { searchImageData } = global.data as { searchImageData: searchImageData }
@@ -36,7 +37,7 @@ export const turnOnSearchMode = async (context: SocketHandle['message']) => {
     surplus_time: searchImageConfig.autoLeave
   })
 
-  await bot.handle_quick_operation_async({
+  await quickOperation({
     context,
     operation: {
       reply: [
@@ -64,14 +65,14 @@ export const turnOffSearchMode = async (context: SocketHandle['message'], manual
   )
 
   if (manual) {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: `${searchImageConfig.word.off_reply}`
       }
     })
   } else {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: [

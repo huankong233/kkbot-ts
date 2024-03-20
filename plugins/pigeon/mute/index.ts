@@ -1,5 +1,6 @@
 import { eventReg } from '@/libs/eventReg.ts'
 import { randomInt } from '@/libs/random.ts'
+import { quickOperation } from '@/libs/sendMsg.ts'
 import { SocketHandle } from 'node-open-shamrock'
 
 export default async () => {
@@ -16,7 +17,7 @@ function event() {
 
 export async function mute(context: SocketHandle['message']) {
   if (context.message_type === 'private')
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: {
         reply: '爬爬爬，私聊来找茬是吧'
@@ -35,8 +36,8 @@ export async function mute(context: SocketHandle['message']) {
     user_id: bot.eventBus.status.self.user_id
   })
 
-  if (self.data.role !== 'admin' && self.data.role !== 'owner') {
-    return await bot.handle_quick_operation_async({
+  if (self.role !== 'admin' && self.role !== 'owner') {
+    return await quickOperation({
       context,
       operation: {
         reply: [`咱还不是管理员呢~`, `管理！快给我上管理！(大声)`].join('\n')
@@ -44,12 +45,12 @@ export async function mute(context: SocketHandle['message']) {
     })
   }
 
-  if (self.data.role === 'admin') {
-    if (user.data.role !== 'member') {
-      return await bot.handle_quick_operation_async({
+  if (self.role === 'admin') {
+    if (user.role !== 'member') {
+      return await quickOperation({
         context,
         operation: {
-          reply: `╭(╯^╰)╮ 快来人给他把${user.data.role === 'admin' ? '管理员' : '群主'}下了！！`
+          reply: `╭(╯^╰)╮ 快来人给他把${user.role === 'admin' ? '管理员' : '群主'}下了！！`
         }
       })
     }
@@ -65,7 +66,7 @@ export async function mute(context: SocketHandle['message']) {
     })
     .catch(async res => {
       if (res.retcode !== 0)
-        await bot.handle_quick_operation_async({
+        await quickOperation({
           context,
           operation: {
             reply: '(ﾟдﾟ；) 失败了?!不可能!!'
@@ -74,7 +75,7 @@ export async function mute(context: SocketHandle['message']) {
       return false
     })
     .finally(async () => {
-      await bot.handle_quick_operation_async({
+      await quickOperation({
         context,
         operation: {
           reply: '还鸽不鸽了'

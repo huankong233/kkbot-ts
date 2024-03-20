@@ -2,7 +2,7 @@ import { eventReg } from '@/libs/eventReg.ts'
 import { downloadFile } from '@/libs/fs.ts'
 import { getUniversalImgURL } from '@/libs/handleUrl.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { sendForwardMsg } from '@/libs/sendMsg.ts'
+import { quickOperation, sendForwardMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
 import fs from 'fs'
@@ -22,7 +22,14 @@ import {
   turnOnSearchMode
 } from './control.ts'
 import { Parser } from './parse.ts'
-import { Image, Node, SocketHandle, convertCQCodeToJSON } from 'node-open-shamrock'
+import {
+  Image,
+  Node,
+  SendMessageArray,
+  SocketHandle,
+  Text,
+  convertCQCodeToJSON
+} from 'node-open-shamrock'
 
 export const logger = makeLogger({ pluginName: 'searchImage' })
 
@@ -79,7 +86,7 @@ async function search(context: SocketHandle['message']) {
     if (message.type === 'image') {
       //扣除鸽子
       if (!(await reduce(user_id, searchImageConfig.reduce, '搜图'))) {
-        return await bot.handle_quick_operation_async({
+        return await quickOperation({
           context,
           operation: {
             reply: `搜索失败,鸽子不足~`
@@ -89,7 +96,7 @@ async function search(context: SocketHandle['message']) {
 
       if (!receive) {
         receive = true
-        await bot.handle_quick_operation_async({
+        await quickOperation({
           context,
           operation: {
             reply: `${searchImageConfig.word.receive}`
@@ -273,16 +280,18 @@ async function parse(
           })
         }
 
-        let message = `${datum.name}(耗时:${Math.floor(datum.cost)}ms):\n`
+        let message: SendMessageArray = [
+          Text({ text: `${datum.name}(耗时:${Math.floor(datum.cost)}ms):\n` })
+        ]
         if (datum.res.length === 0) {
-          message += '没有搜索结果~'
+          message.push(Text({ text: '没有搜索结果~' }))
         } else {
           let limit =
             datum.res.length >= searchImageConfig.limit ? searchImageConfig.limit : datum.res.length
 
           for (let i = 0; i < limit; i++) {
             const item = datum.res[i]
-            message += await Parser[datum.name](item)
+            message.push(...(await Parser[datum.name](item)))
           }
         }
 
@@ -298,7 +307,7 @@ async function parse(
 
   //发送
   await sendForwardMsg(context, messages).catch(async () => {
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: {
         reply: '发送合并消息失败，可以尝试私聊我哦~(鸽子已返还)'

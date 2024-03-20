@@ -7,6 +7,7 @@ import {
   convertCQCodeToJSON,
   convertJSONToCQCode
 } from 'node-open-shamrock'
+import { quickOperation } from '@/libs/sendMsg.ts'
 
 /**
  * 事件快捷注册
@@ -141,7 +142,7 @@ export async function missingParams(
   const { botConfig } = global.config as { botConfig: botConfig }
 
   if (command.params.length < paramsLength) {
-    return bot.handle_quick_operation_async({
+    return quickOperation({
       context,
       operation: {
         reply: `参数不足，请发送"${botConfig.prefix}帮助 ${command.name}"查看帮助`

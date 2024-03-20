@@ -2,7 +2,7 @@ import { retryGet } from '@/libs/axios.ts'
 import type { commandFormat } from '@/libs/eventReg.ts'
 import { eventReg, missingParams } from '@/libs/eventReg.ts'
 import { makeLogger } from '@/libs/logger.ts'
-import { sendForwardMsg } from '@/libs/sendMsg.ts'
+import { quickOperation, sendForwardMsg } from '@/libs/sendMsg.ts'
 import type { botConfig } from '@/plugins/builtInPlugins/bot/config.d.ts'
 import { add, reduce } from '@/plugins/pigeon/pigeon/index.ts'
 import * as cheerio from 'cheerio'
@@ -31,7 +31,7 @@ async function search(context: SocketHandle['message'], command: commandFormat) 
   const { btSearchConfig } = global.config as { btSearchConfig: btSearchConfig }
 
   if (!(await reduce(user_id, btSearchConfig.cost, `BT搜索`))) {
-    return await bot.handle_quick_operation_async({
+    return await quickOperation({
       context,
       operation: { reply: Text({ text: `搜索失败,鸽子不足~` }) }
     })
@@ -50,7 +50,7 @@ async function search(context: SocketHandle['message'], command: commandFormat) 
   } catch (error) {
     logger.WARNING('获取信息失败')
     logger.ERROR(error)
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: { reply: Text({ text: '获取信息失败' }) }
     })
@@ -59,7 +59,7 @@ async function search(context: SocketHandle['message'], command: commandFormat) 
 
   try {
     if (!messages) {
-      await bot.handle_quick_operation_async({
+      await quickOperation({
         context,
         operation: { reply: Text({ text: '没有搜索结果' }) }
       })
@@ -69,7 +69,7 @@ async function search(context: SocketHandle['message'], command: commandFormat) 
   } catch (error) {
     logger.WARNING('发送失败')
     logger.ERROR(error)
-    await bot.handle_quick_operation_async({
+    await quickOperation({
       context,
       operation: { reply: Text({ text: '发送失败,请尝试私聊' }) }
     })
